@@ -198,9 +198,183 @@ export async function extractCurrentValueFromCsv(url) {
     console.log('Looking for format dropdown and download button...');
     let csvDownloaded = false;
     
-    // First, try to find and interact with the format dropdown
-    console.log('Searching for format dropdown...');
-    let csvSelected = false;
+      // First, try to find and interact with the format dropdown
+      console.log('Searching for format dropdown...');
+      let csvSelected = false;
+      
+      // Find download button first, then look for format dropdown near it
+      const downloadButtonInfo = await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button, a, [role="button"]'));
+        const baixarButton = buttons.find(btn => {
+          const text = (btn.textContent || '').toLowerCase();
+          return text.includes('baixar') || text.includes('download');
+        });
+        
+        if (baixarButton) {
+          // Look for format dropdowns near the download button
+          const container = baixarButton.closest('div') || baixarButton.parentElement;
+          const siblings = Array.from(container?.children || []);
+          const nearbySelects = Array.from(document.querySelectorAll(
+            'select, .MuiSelect-select, [class*="MuiSelect"], button[aria-haspopup]'
+          )).filter(el => {
+            // Check if it's near the download button (same container or nearby)
+            const elContainer = el.closest('div') || el.parentElement;
+            return elContainer === container || 
+                   container?.contains(el) || 
+                   elContainer?.contains(baixarButton);
+          });
+          
+          return {
+            found: true,
+            buttonText: baixarButton.textContent?.trim() || '',
+            nearbySelects: nearbySelects.map(el => ({
+              tag: el.tagName,
+              text: el.textContent?.trim() || '',
+              className: (el.className && typeof el.className === 'string') ? el.className : String(el.className || ''),
+              id: el.id || '',
+              isNativeInput: el.tagName === 'INPUT' && el.className.includes('MuiSelect-nativeInput')
+            }))
+          };
+        }
+        return { found: false, nearbySelects: [] };
+      });
+      
+      if (downloadButtonInfo.found) {
+        console.log(`Found download button: "${downloadButtonInfo.buttonText}"`);
+        console.log(`Found ${downloadButtonInfo.nearbySelects.length} nearby select/dropdown elements:`);
+        downloadButtonInfo.nearbySelects.forEach((sel, idx) => {
+          const classStr = sel.className.substring ? sel.className.substring(0, 50) : String(sel.className).substring(0, 50);
+          console.log(`  [${idx}] ${sel.tag}: "${sel.text}" (class: ${classStr})`);
+        });
+        
+        // Find the format select (the one showing "Excel (.xlsx)")
+        const formatSelect = downloadButtonInfo.nearbySelects.find(sel => 
+          sel.text.includes('xlsx') || sel.text.includes('Excel') || sel.isNativeInput
+        );
+        
+        if (formatSelect) {
+          console.log(`Found format select: ${formatSelect.tag} with text "${formatSelect.text}"`);
+          
+          // If it's a native input, we can use it directly
+          if (formatSelect.isNativeInput) {
+            // Find the select element that contains this input
+            const selectElement = await page.evaluateHandle(() => {
+              const input = document.querySelector('.MuiSelect-nativeInput');
+              return input ? input.closest('div[class*="MuiSelect-root"]') || input.parentElement : null;
+            });
+            
+            if (selectElement && selectElement.asElement()) {
+              // Click to open the select
+              await selectElement.asElement().click();
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
+              // Get the options from the native select
+              const options = await page.evaluate(() => {
+                const input = document.querySelector('.MuiSelect-nativeInput');
+                if (input && input.options) {
+                  return Array.from(input.options).map((opt, idx) => ({
+                    index: idx,
+                    text: opt.text || '',
+                    value: opt.value || ''
+                  }));
+                }
+                return [];
+              });
+              
+              console.log(`Format select options: ${options.map(o => `[${o.index}] "${o.text}"`).join(', ')}`);
+              
+              // Find CSV option (should be second option: Excel, CSV, JSON)
+              const csvOption = options.find(opt => 
+                opt.text.toLowerCase().includes('csv') || opt.index === 1
+              );
+              
+              if (csvOption) {
+                // Select the CSV option using the native select
+                await page.evaluate((value) => {
+                  const input = document.querySelector('.MuiSelect-nativeInput');
+                  if (input) {
+                    input.value = value;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                  }
+                }, csvOption.value || csvOption.index.toString());
+                
+                console.log(`✓ Selected CSV format: "${csvOption.text}"`);
+                csvSelected = true;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+          } else {
+            // It's a div - click it to open the menu
+            console.log(`Clicking format select div to open menu...`);
+            const selectDiv = await page.evaluateHandle(() => {
+              const divs = Array.from(document.querySelectorAll('.MuiSelect-select'));
+              return divs.find(d => {
+                const text = (d.textContent || '').toLowerCase();
+                return text.includes('xlsx') || text.includes('excel');
+              });
+            });
+            
+            if (selectDiv && selectDiv.asElement()) {
+              await selectDiv.asElement().click();
+              await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for menu to open
+              
+              // Look for CSV option in the MUI menu
+              const menuInfo = await page.evaluate(() => {
+                const options = Array.from(document.querySelectorAll(
+                  'li[role="option"], [role="option"], .MuiMenuItem-root, [class*="MuiMenuItem"]'
+                )).filter(item => {
+                  const style = window.getComputedStyle(item);
+                  return style.display !== 'none' && style.visibility !== 'hidden' && 
+                         item.offsetParent !== null;
+                });
+                
+                return options.map((opt, idx) => ({
+                  index: idx,
+                  text: opt.textContent?.trim() || '',
+                  tag: opt.tagName,
+                  className: opt.className || ''
+                }));
+              });
+              
+              console.log(`Found ${menuInfo.length} menu options:`);
+              menuInfo.forEach(opt => {
+                console.log(`  [${opt.index}] "${opt.text}"`);
+              });
+              
+              // Find CSV option
+              const csvOption = menuInfo.find(opt => {
+                const text = opt.text.toLowerCase();
+                return (text.includes('csv') || text.includes('.csv')) && 
+                       !text.includes('xlsx') && !text.includes('excel') && !text.includes('json');
+              }) || (menuInfo.length >= 2 ? menuInfo[1] : null); // Fallback to second option
+              
+              if (csvOption) {
+                console.log(`Selecting CSV option: "${csvOption.text}" (index ${csvOption.index})`);
+                
+                // Click the CSV option
+                await page.evaluate((index) => {
+                  const options = Array.from(document.querySelectorAll(
+                    'li[role="option"], [role="option"], .MuiMenuItem-root, [class*="MuiMenuItem"]'
+                  )).filter(item => {
+                    const style = window.getComputedStyle(item);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && 
+                           item.offsetParent !== null;
+                  });
+                  if (options[index]) {
+                    options[index].click();
+                  }
+                }, csvOption.index);
+                
+                console.log(`✓ Selected CSV format: "${csvOption.text}"`);
+                csvSelected = true;
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for selection to apply
+              } else {
+                console.log('Could not find CSV option in menu');
+              }
+            }
+          }
+        }
+      }
     
     try {
       // Try to find dropdown/select elements
@@ -229,7 +403,38 @@ export async function extractCurrentValueFromCsv(url) {
           }
         }
         
-        // Look for custom dropdowns (button/menu pattern)
+        // Look for Material-UI Select components (MuiSelect) that might be format dropdowns
+        const muiSelects = Array.from(document.querySelectorAll(
+          '.MuiSelect-select, ' +
+          '[class*="MuiSelect"], ' +
+          'div[class*="MuiSelect"]'
+        ));
+        
+        for (const select of muiSelects) {
+          const text = (select.textContent || '').toLowerCase();
+          // Check if this select shows format-related text
+          if (text.includes('xlsx') || 
+              text.includes('excel') || 
+              text.includes('.xlsx') ||
+              text.includes('.csv') ||
+              (text.includes('csv') && !text.includes('gasene')) ||
+              text.includes('json')) {
+            // Find the parent select element or button
+            let selectElement = select.closest('div[class*="MuiSelect-root"]') || 
+                               select.closest('button') ||
+                               select.parentElement;
+            
+            return {
+              type: 'mui-select',
+              id: selectElement?.id || select.id || '',
+              className: selectElement?.className || select.className || '',
+              text: select.textContent?.trim() || '',
+              selectElement: select
+            };
+          }
+        }
+        
+        // Look for custom dropdowns (button/menu pattern) - specifically format dropdowns
         const dropdownButtons = Array.from(document.querySelectorAll(
           'button[aria-haspopup="listbox"], ' +
           '[role="combobox"], ' +
@@ -241,15 +446,59 @@ export async function extractCurrentValueFromCsv(url) {
         
         for (const button of dropdownButtons) {
           const text = (button.textContent || '').toLowerCase();
-          if (text.includes('xlsx') || text.includes('excel') || text.includes('format') || 
-              button.getAttribute('aria-label')?.toLowerCase().includes('format')) {
+          const ariaLabel = (button.getAttribute('aria-label') || '').toLowerCase();
+          const title = (button.getAttribute('title') || '').toLowerCase();
+          
+          // Look for format-related indicators
+          const isFormatDropdown = text.includes('xlsx') || 
+                                  text.includes('excel') || 
+                                  text.includes('.xlsx') ||
+                                  text.includes('.csv') ||
+                                  (text.includes('csv') && !text.includes('gasene')) ||
+                                  text.includes('json') ||
+                                  text.includes('format') ||
+                                  ariaLabel.includes('format') ||
+                                  title.includes('format');
+          
+          if (isFormatDropdown) {
             return {
               type: 'custom',
               id: button.id || '',
               className: button.className || '',
               text: button.textContent?.trim() || '',
-              ariaLabel: button.getAttribute('aria-label') || ''
+              ariaLabel: button.getAttribute('aria-label') || '',
+              title: button.getAttribute('title') || ''
             };
+          }
+        }
+        
+        // Also look for buttons near download button that might be format selector
+        const downloadButtons = Array.from(document.querySelectorAll('button, a, [role="button"]'));
+        const baixarButton = downloadButtons.find(btn => 
+          (btn.textContent || '').toLowerCase().includes('baixar') ||
+          (btn.textContent || '').toLowerCase().includes('download')
+        );
+        
+        if (baixarButton) {
+          // Look for format dropdown near the download button
+          const nearbyElements = Array.from(document.querySelectorAll(
+            'button, select, [role="combobox"], [class*="dropdown"], [class*="select"]'
+          ));
+          
+          for (const element of nearbyElements) {
+            const text = (element.textContent || '').toLowerCase();
+            if ((text.includes('xlsx') || text.includes('.xlsx') || text.includes('excel')) &&
+                element !== baixarButton) {
+              return {
+                type: 'custom',
+                id: element.id || '',
+                className: element.className || '',
+                text: element.textContent?.trim() || '',
+                ariaLabel: element.getAttribute('aria-label') || '',
+                title: element.getAttribute('title') || '',
+                nearDownload: true
+              };
+            }
           }
         }
         
@@ -293,6 +542,81 @@ export async function extractCurrentValueFromCsv(url) {
               console.log('Could not determine CSV option value');
             }
           }
+        } else if (dropdownInfo.type === 'mui-select') {
+          // Material-UI Select component
+          console.log(`Found MUI Select dropdown: ${dropdownInfo.text}`);
+          
+          // MUI Selects can be clicked to open, or we can use the select element directly
+          // Try to find the actual select input or the clickable area
+          const selectElement = await page.evaluateHandle((info) => {
+            // Find element with the text
+            const elements = Array.from(document.querySelectorAll('.MuiSelect-select, [class*="MuiSelect"]'));
+            return elements.find(el => (el.textContent || '').trim() === info.text);
+          }, dropdownInfo);
+          
+          if (selectElement && selectElement.asElement()) {
+            // Click to open the select menu
+            await selectElement.asElement().click();
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Now look for the CSV option in the MUI menu
+            const csvOption = await page.evaluate(() => {
+              // MUI menus typically use li[role="option"] or [role="option"]
+              const options = Array.from(document.querySelectorAll(
+                'li[role="option"], ' +
+                '[role="option"], ' +
+                '.MuiMenuItem-root, ' +
+                '[class*="MuiMenuItem"]'
+              )).filter(item => {
+                const style = window.getComputedStyle(item);
+                return style.display !== 'none' && style.visibility !== 'hidden';
+              });
+              
+              // Look for CSV option
+              for (const option of options) {
+                const text = (option.textContent || '').toLowerCase();
+                if ((text.includes('csv') || text.includes('.csv')) && 
+                    !text.includes('xlsx') && !text.includes('excel') && !text.includes('json')) {
+                  return {
+                    text: option.textContent?.trim() || '',
+                    index: options.indexOf(option)
+                  };
+                }
+              }
+              
+              // If not found by text, try second option (assuming: Excel, CSV, JSON)
+              if (options.length >= 2) {
+                const secondText = (options[1].textContent || '').toLowerCase();
+                if (!secondText.includes('xlsx') && !secondText.includes('excel') && !secondText.includes('json')) {
+                  return {
+                    text: options[1].textContent?.trim() || '',
+                    index: 1
+                  };
+                }
+              }
+              
+              return null;
+            });
+            
+            if (csvOption) {
+              // Click the CSV option
+              await page.evaluate((index) => {
+                const options = Array.from(document.querySelectorAll(
+                  'li[role="option"], [role="option"], .MuiMenuItem-root'
+                )).filter(item => {
+                  const style = window.getComputedStyle(item);
+                  return style.display !== 'none' && style.visibility !== 'hidden';
+                });
+                if (options[index]) {
+                  options[index].click();
+                }
+              }, csvOption.index);
+              
+              console.log(`✓ Selected CSV option in MUI Select: "${csvOption.text}"`);
+              csvSelected = true;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
         } else if (dropdownInfo.type === 'custom') {
           // Custom dropdown - click to open, then select CSV option
           const dropdownSelector = dropdownInfo.id ? `#${dropdownInfo.id}` :
@@ -303,36 +627,168 @@ export async function extractCurrentValueFromCsv(url) {
             if (dropdownButton) {
               console.log(`Clicking custom dropdown: ${dropdownInfo.text}`);
               await dropdownButton.click();
-              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for menu to open
+              await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for menu to open
+              
+              // Sometimes there are multiple menus - wait a bit more for format menu to appear
+              await new Promise(resolve => setTimeout(resolve, 1000));
               
               // Look for CSV option in the opened menu
-              const csvOption = await page.evaluate(() => {
+              const menuInfo = await page.evaluate(() => {
                 const menuItems = Array.from(document.querySelectorAll(
                   '[role="option"], ' +
                   '[role="menuitem"], ' +
                   'li[role="option"], ' +
                   '.dropdown-item, ' +
                   '.menu-item, ' +
-                  '[class*="option"]'
+                  '[class*="option"], ' +
+                  'button[role="option"], ' +
+                  'div[role="option"]'
                 ));
                 
+                return {
+                  count: menuItems.length,
+                  items: menuItems.map((item, idx) => ({
+                    index: idx,
+                    text: item.textContent?.trim() || '',
+                    tag: item.tagName,
+                    className: item.className || '',
+                    id: item.id || ''
+                  }))
+                };
+              });
+              
+              console.log(`Found ${menuInfo.count} menu items in dropdown:`);
+              menuInfo.items.forEach(item => {
+                console.log(`  [${item.index}] "${item.text}" (${item.tag})`);
+              });
+              
+              // Look for format options specifically - they might be in a different menu
+              const allMenus = await page.evaluate(() => {
+                // Get all visible menus/dropdowns
+                const allMenuItems = Array.from(document.querySelectorAll(
+                  '[role="option"], ' +
+                  '[role="menuitem"], ' +
+                  'li[role="option"], ' +
+                  '.dropdown-item, ' +
+                  '.menu-item, ' +
+                  '[class*="option"], ' +
+                  'button[role="option"], ' +
+                  'div[role="option"], ' +
+                  '[class*="menu"] [class*="item"], ' +
+                  'ul li, ' +
+                  'ol li'
+                )).filter(item => {
+                  // Only visible items
+                  const style = window.getComputedStyle(item);
+                  return style.display !== 'none' && style.visibility !== 'hidden';
+                });
+                
+                return allMenuItems.map((item, idx) => ({
+                  index: idx,
+                  text: item.textContent?.trim() || '',
+                  tag: item.tagName,
+                  className: item.className || '',
+                  id: item.id || '',
+                  parent: item.parentElement?.className || ''
+                }));
+              });
+              
+              console.log(`Found ${allMenus.length} total menu items across all menus:`);
+              allMenus.forEach(item => {
+                console.log(`  [${item.index}] "${item.text}" (${item.tag}, parent: ${item.parent})`);
+              });
+              
+              // Look for format options (Excel, CSV, JSON)
+              const formatMenuItems = allMenus.filter(item => {
+                const text = item.text.toLowerCase();
+                return text.includes('xlsx') || 
+                       text.includes('excel') || 
+                       text.includes('csv') || 
+                       text.includes('json') ||
+                       text.includes('.xlsx') ||
+                       text.includes('.csv') ||
+                       text.includes('.json');
+              });
+              
+              if (formatMenuItems.length > 0) {
+                console.log(`Found ${formatMenuItems.length} format-related menu items:`);
+                formatMenuItems.forEach(item => {
+                  console.log(`  - "${item.text}"`);
+                });
+              }
+              
+              const csvOption = await page.evaluate(() => {
+                // Look specifically for format options
+                const allItems = Array.from(document.querySelectorAll(
+                  '[role="option"], ' +
+                  '[role="menuitem"], ' +
+                  'li, ' +
+                  '.dropdown-item, ' +
+                  '.menu-item, ' +
+                  '[class*="option"]'
+                )).filter(item => {
+                  const style = window.getComputedStyle(item);
+                  const text = (item.textContent || '').toLowerCase();
+                  return (style.display !== 'none' && style.visibility !== 'hidden') &&
+                         (text.includes('xlsx') || text.includes('excel') || text.includes('csv') || text.includes('json'));
+                });
+                
+                const menuItems = allItems.length > 0 ? allItems : Array.from(document.querySelectorAll(
+                  '[role="option"], ' +
+                  '[role="menuitem"], ' +
+                  'li[role="option"], ' +
+                  '.dropdown-item, ' +
+                  '.menu-item, ' +
+                  '[class*="option"], ' +
+                  'button[role="option"], ' +
+                  'div[role="option"]'
+                ));
+                
+                // First, try to find CSV by text (case insensitive, look for .csv or just "csv")
                 for (const item of menuItems) {
                   const text = (item.textContent || '').toLowerCase();
-                  if (text.includes('csv') && !text.includes('xlsx') && !text.includes('json')) {
+                  const innerText = text.trim();
+                  // Look for CSV - could be "CSV", ".csv", "csv format", etc.
+                  if ((innerText.includes('csv') || innerText.includes('.csv')) && 
+                      !innerText.includes('xlsx') && 
+                      !innerText.includes('excel') && 
+                      !innerText.includes('json')) {
                     return {
                       text: item.textContent?.trim() || '',
                       selector: item.id ? `#${item.id}` : null,
-                      className: item.className || ''
+                      className: item.className || '',
+                      index: menuItems.indexOf(item)
                     };
                   }
                 }
                 
-                // If no CSV found by text, try second option
+                // If no CSV found by text, try to find by position
+                // Options are typically: Excel (.xlsx), CSV, JSON
+                // So CSV should be the second option (index 1)
+                if (menuItems.length >= 2) {
+                  // Check if second option looks like CSV
+                  const secondOption = menuItems[1];
+                  const secondText = (secondOption.textContent || '').toLowerCase().trim();
+                  // If it doesn't contain xlsx, excel, or json, it might be CSV
+                  if (!secondText.includes('xlsx') && 
+                      !secondText.includes('excel') && 
+                      !secondText.includes('json')) {
+                    return {
+                      text: secondOption.textContent?.trim() || '',
+                      selector: secondOption.id ? `#${secondOption.id}` : null,
+                      className: secondOption.className || '',
+                      index: 1
+                    };
+                  }
+                }
+                
+                // Last resort: return second option anyway
                 if (menuItems.length >= 2) {
                   return {
                     text: menuItems[1].textContent?.trim() || '',
                     selector: menuItems[1].id ? `#${menuItems[1].id}` : null,
-                    className: menuItems[1].className || ''
+                    className: menuItems[1].className || '',
+                    index: 1
                   };
                 }
                 
@@ -340,20 +796,46 @@ export async function extractCurrentValueFromCsv(url) {
               });
               
               if (csvOption) {
-                // Click the CSV option
-                if (csvOption.selector) {
-                  await page.click(csvOption.selector);
+                console.log(`Found CSV option candidate: "${csvOption.text}" (index: ${csvOption.index})`);
+                
+                // Verify it's actually CSV before selecting
+                const optionText = csvOption.text.toLowerCase();
+                const isLikelyCsv = optionText.includes('csv') || 
+                                   optionText.includes('.csv') ||
+                                   (!optionText.includes('xlsx') && 
+                                    !optionText.includes('excel') && 
+                                    !optionText.includes('json') &&
+                                    csvOption.index === 1); // Second option that's not Excel/JSON
+                
+                if (isLikelyCsv || csvOption.index === 1) {
+                  // Click the CSV option
+                  try {
+                    if (csvOption.selector) {
+                      await page.click(csvOption.selector);
+                    } else {
+                      // Try to click by index or text
+                      await page.evaluate((index, text) => {
+                        const items = Array.from(document.querySelectorAll(
+                          '[role="option"], [role="menuitem"], li[role="option"], .dropdown-item'
+                        ));
+                        if (items[index]) {
+                          items[index].click();
+                        } else {
+                          // Fallback: find by text
+                          const item = items.find(i => (i.textContent || '').trim() === text);
+                          if (item) item.click();
+                        }
+                      }, csvOption.index, csvOption.text);
+                    }
+                    console.log(`✓ Selected CSV option: "${csvOption.text}"`);
+                    csvSelected = true;
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for selection to apply
+                  } catch (e) {
+                    console.log(`Error clicking CSV option: ${e.message}`);
+                  }
                 } else {
-                  // Try to click by text
-                  await page.evaluate((text) => {
-                    const items = Array.from(document.querySelectorAll('[role="option"], [role="menuitem"]'));
-                    const item = items.find(i => (i.textContent || '').trim() === text);
-                    if (item) item.click();
-                  }, csvOption.text);
+                  console.log(`Warning: Option "${csvOption.text}" doesn't look like CSV. Skipping selection.`);
                 }
-                console.log(`Selected CSV option: ${csvOption.text}`);
-                csvSelected = true;
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for selection to apply
               } else {
                 console.log('Could not find CSV option in dropdown menu');
               }
