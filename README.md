@@ -5,10 +5,10 @@ Automated monitoring system for the MAGO TAG graph at https://mago.ntag.com.br/e
 ## Features
 
 - 📸 Automatic screenshot capture of the graph
-- 🔍 Value extraction from the graph
+- 🔍 Value extraction from CSV data
 - 📊 Condition assessment based on thresholds
 - 📧 Email notifications with screenshot and assessment
-- ⏰ Scheduled runs every 2 hours via GitHub Actions
+- ⏰ Scheduled runs twice daily (9:15 AM and 6:15 PM São Paulo time) via GitHub Actions
 - 💰 **100% Free** - Uses free tier services only
 
 ## Thresholds
@@ -45,7 +45,7 @@ The system assesses values based on these thresholds:
    - `ALERTA_CALL`: (Optional) Defaults to `66500000`
    - `CRITICO_CALL`: (Optional) Defaults to `64000000`
 
-4. **Enable GitHub Actions** - The workflow will automatically run every 2 hours
+4. **Enable GitHub Actions** - The workflow will automatically run twice daily (9:15 AM and 6:15 PM São Paulo time)
 
 5. **Test manually** - Go to Actions tab → "Monitor MAGO TAG Graph" → "Run workflow"
 
@@ -99,7 +99,7 @@ npm start
    - Select "Mail Send" permission
    - Click "Create & View"
    - **Copy the API key immediately** (starts with `SG.`)
-4. **Free Tier Limits**: 100 emails/day (sufficient for 2-hourly checks = 12 emails/day)
+4. **Free Tier Limits**: 100 emails/day (sufficient for twice daily checks = 2 emails/day)
 
 ## Project Structure
 
@@ -111,7 +111,7 @@ MAGO_TAG/
 ├── src/
 │   ├── index.js                 # Main orchestrator
 │   ├── screenshot.js            # Screenshot functionality
-│   ├── extractValue.js          # Value extraction
+│   ├── extractValueFromCsv.js   # CSV value extraction
 │   ├── assessCondition.js       # Assessment logic
 │   └── sendEmail.js             # Email sending
 ├── config.example.json          # Configuration template
@@ -122,16 +122,16 @@ MAGO_TAG/
 ## How It Works
 
 1. **Screenshot**: Uses Puppeteer to navigate to the website and capture the graph
-2. **Extract Value**: Parses the DOM to find the current "Valor atual" value
+2. **Extract Value**: Downloads and parses CSV data to extract the current Empacotamento value
 3. **Assess**: Compares the value against thresholds to determine status
 4. **Notify**: Sends an email with the screenshot and assessment
 
 ## Troubleshooting
 
 ### Value extraction fails
-- The website structure may have changed
-- Check `src/extractValue.js` and adjust the DOM selectors
-- You may need to inspect the actual page HTML
+- The CSV download or format may have changed
+- Check `src/extractValueFromCsv.js` and verify the CSV structure
+- Ensure the website's CSV export functionality is working
 
 ### Email not sending
 - Verify SendGrid API key is correct and has "Mail Send" permission
@@ -147,8 +147,8 @@ MAGO_TAG/
 
 ## Cost
 
-- **GitHub Actions**: 2,000 minutes/month free (sufficient for 2-hourly checks = ~360 minutes/month)
-- **SendGrid**: Free tier includes 100 emails/day (sufficient for 2-hourly checks = 12 emails/day)
+- **GitHub Actions**: 2,000 minutes/month free (sufficient for twice daily checks = ~60 minutes/month)
+- **SendGrid**: Free tier includes 100 emails/day (sufficient for twice daily checks = 2 emails/day)
 - **Total Cost**: **$0**
 
 ## License

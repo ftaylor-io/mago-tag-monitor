@@ -5,7 +5,7 @@ Follow these steps to get your MAGO TAG monitor running on GitHub Actions.
 ## Step 1: Set Up SendGrid Account
 
 1. **Sign up for SendGrid**: Go to https://sendgrid.com and create a free account
-   - Free tier includes 100 emails/day (sufficient for 2-hourly checks)
+   - Free tier includes 100 emails/day (sufficient for twice daily checks)
 
 2. **Verify Your Sender Email**:
    - Go to SendGrid Dashboard → Settings → Sender Authentication
@@ -118,10 +118,10 @@ git push -u origin main
 
 ## Step 6: Verify Scheduled Runs
 
-1. The workflow is set to run automatically every 2 hours
+1. The workflow is set to run automatically twice daily (9:15 AM and 6:15 PM São Paulo time)
 2. You can see scheduled runs in the **Actions** tab
 3. The next run time will be shown in the workflow schedule
-4. You'll receive emails every 2 hours with the graph and assessment
+4. You'll receive emails twice daily with the graph and assessment
 
 ## Troubleshooting
 

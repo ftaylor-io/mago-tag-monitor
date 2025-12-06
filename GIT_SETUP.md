@@ -317,7 +317,7 @@ The hook **does not** auto-commit anything - it only validates.
 
 This project uses GitHub Actions for automated monitoring. When you push to GitHub:
 
-1. The workflow runs automatically (every 2 hours on schedule)
+1. The workflow runs automatically (twice daily on schedule: 9:15 AM and 6:15 PM São Paulo time)
 2. You can also trigger it manually from the Actions tab
 3. The workflow uses secrets configured in GitHub (not in the code)
 
