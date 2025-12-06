@@ -66,7 +66,7 @@ export async function sendEmail(config, screenshotPath, assessment) {
   const htmlContent = `
     <html>
       <body style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Monitoramento MAGO TAG - Empenamento</h2>
+        <h2>Monitoramento MAGO TAG - Empacotamento</h2>
         <div style="background-color: ${getSeverityColor(assessment.severity)}; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <h3 style="margin: 0; color: white;">${assessment.status}</h3>
           <p style="margin: 10px 0 0 0; color: white; font-size: 18px;">${assessment.message}</p>
@@ -80,7 +80,7 @@ export async function sendEmail(config, screenshotPath, assessment) {
   `;
 
   const textContent = `
-Monitoramento MAGO TAG - Empenamento
+Monitoramento MAGO TAG - Empacotamento
 
 ${assessment.status}
 ${assessment.message}
@@ -92,7 +92,7 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
   const msg = {
     to: recipients,
     from: from,
-    subject: subject || 'MAGO TAG - Monitoramento de Empenamento',
+    subject: subject || 'MAGO TAG - Monitoramento de Empacotamento',
     text: textContent,
     html: htmlContent,
     attachments: screenshotBuffer ? [

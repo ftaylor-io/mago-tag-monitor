@@ -12,7 +12,7 @@
       "recipient2@example.com"
     ],
     "from": "your-verified-email@example.com",
-    "subject": "MAGO TAG - Monitoramento de Empenamento",
+    "subject": "MAGO TAG - Monitoramento de Empacotamento",
     "apiKey": "your-sendgrid-api-key-here"
   }
 }

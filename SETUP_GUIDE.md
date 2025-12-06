@@ -87,7 +87,7 @@ git push -u origin main
 
 **EMAIL_SUBJECT**
 - Name: `EMAIL_SUBJECT`
-- Value: Custom subject line (default: "MAGO TAG - Monitoramento de Empenamento")
+- Value: Custom subject line (default: "MAGO TAG - Monitoramento de Empacotamento")
 
 **WEBSITE_URL**
 - Name: `WEBSITE_URL`

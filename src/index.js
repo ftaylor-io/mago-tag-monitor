@@ -44,7 +44,7 @@ async function main() {
               JSON.parse(process.env.EMAIL_RECIPIENTS) : 
               process.env.EMAIL_RECIPIENTS.split(',').map(e => e.trim())) : [],
           from: process.env.EMAIL_FROM,
-          subject: process.env.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empenamento',
+          subject: process.env.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empacotamento',
           apiKey: process.env.SENDGRID_API_KEY
         }
       };
