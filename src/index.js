@@ -17,12 +17,12 @@ dotenv.config();
  * Main function that orchestrates the monitoring process
  */
 async function main() {
+  let config; // Declare config outside try block so it's accessible in catch
   try {
     console.log('=== MAGO TAG Monitor Started ===');
     console.log(`Time: ${new Date().toLocaleString('pt-BR')}\n`);
 
     // Load configuration
-    let config;
     const configPath = path.join(__dirname, '..', 'config.json');
     
     if (fs.existsSync(configPath)) {
@@ -116,7 +116,8 @@ async function main() {
     }
     console.error('\nTroubleshooting tips:');
     console.error('- Check that all required GitHub Secrets are set (SENDGRID_API_KEY, EMAIL_FROM, EMAIL_RECIPIENTS)');
-    console.error('- Verify the website URL is accessible: ' + (config?.websiteUrl || 'https://mago.ntag.com.br/empacotamento'));
+    const websiteUrl = config?.websiteUrl || process.env.WEBSITE_URL || 'https://mago.ntag.com.br/empacotamento';
+    console.error('- Verify the website URL is accessible: ' + websiteUrl);
     console.error('- Check SendGrid dashboard for API key validity and rate limits');
     process.exit(1);
   }
