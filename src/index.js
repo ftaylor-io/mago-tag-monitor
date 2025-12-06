@@ -164,7 +164,6 @@ async function main() {
 
     // Display dry-run results prominently
     if (isDryRun) {
-      const lastCompleteHour = getLastCompleteHour();
       const thresholdRange = getThresholdRange(currentValue, config.thresholds);
       const now = new Date();
       
@@ -175,7 +174,7 @@ async function main() {
       console.log(`Status: ${assessment.status}`);
       console.log(`Severity: ${assessment.severity}`);
       console.log(`Threshold Range: ${thresholdRange}`);
-      console.log(`Last Complete Hour: ${lastCompleteHour.toString().padStart(2, '0')}:00`);
+      console.log(`Note: Value is from the most recent Empacotamento data available in CSV`);
       console.log(`Extraction Time: ${now.toLocaleString('pt-BR')}`);
       console.log('='.repeat(60));
       console.log('\n✓ Dry run completed successfully - no email was sent');

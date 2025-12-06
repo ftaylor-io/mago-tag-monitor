@@ -80,28 +80,22 @@ function parseCsvAndExtractValue(csvContent) {
   
   console.log(`Found ${empacotamentoRows.length} Empacotamento rows in CSV`);
   
-  // Get last complete hour
+  // Sort all Empacotamento rows by date descending (most recent first)
+  empacotamentoRows.sort((a, b) => b.date - a.date);
+  
+  // Use the most recent Empacotamento value available in the CSV
+  // The CSV file contains the most recent available data, so we use that
+  const mostRecent = empacotamentoRows[0];
+  
+  // Get current time info for logging
+  const now = new Date();
   const lastCompleteHour = getLastCompleteHour();
-  console.log(`Last complete hour: ${lastCompleteHour}:00`);
+  console.log(`Current time: ${now.toLocaleString('pt-BR')}`);
+  console.log(`Last complete hour (calculated): ${lastCompleteHour}:00`);
+  console.log(`Most recent Empacotamento data in CSV: hour ${mostRecent.hour}:00`);
+  console.log(`Selected Empacotamento value: ${mostRecent.value.toLocaleString('pt-BR')} from hour ${mostRecent.hour}:00`);
   
-  // Filter for last complete hour or earlier, sort by date descending
-  const validRows = empacotamentoRows
-    .filter(row => row.hour <= lastCompleteHour)
-    .sort((a, b) => b.date - a.date);
-  
-  if (validRows.length === 0) {
-    // Fallback: use most recent Empacotamento value
-    console.log('No rows found for last complete hour, using most recent Empacotamento value');
-    const mostRecent = empacotamentoRows.sort((a, b) => b.date - a.date)[0];
-    console.log(`Using most recent: ${mostRecent.value} from hour ${mostRecent.hour}:00`);
-    return mostRecent.value;
-  }
-  
-  // Return the most recent value for the last complete hour
-  const selectedRow = validRows[0];
-  console.log(`Selected Empacotamento value: ${selectedRow.value.toLocaleString('pt-BR')} from hour ${selectedRow.hour}:00`);
-  
-  return selectedRow.value;
+  return mostRecent.value;
 }
 
 /**
