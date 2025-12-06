@@ -20,6 +20,12 @@ export async function sendEmail(config, screenshotPath, assessment) {
     throw new Error('SendGrid API key is required');
   }
 
+  // Validate API key format (should start with SG.)
+  if (!apiKey.startsWith('SG.')) {
+    console.warn('⚠️  Warning: SendGrid API key should start with "SG."');
+    console.warn('   Current key format:', apiKey.substring(0, 5) + '...');
+  }
+
   if (!recipients || recipients.length === 0) {
     throw new Error('At least one email recipient is required');
   }
@@ -28,8 +34,28 @@ export async function sendEmail(config, screenshotPath, assessment) {
     throw new Error('From email address is required');
   }
 
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(from)) {
+    throw new Error(`Invalid from email format: ${from}`);
+  }
+
+  recipients.forEach((recipient, index) => {
+    if (!emailRegex.test(recipient)) {
+      throw new Error(`Invalid recipient email format at index ${index}: ${recipient}`);
+    }
+  });
+
   // Set SendGrid API key
+  console.log('Setting SendGrid API key (format check: ' + (apiKey.startsWith('SG.') ? '✓' : '✗') + ')');
+  console.log('API Key length:', apiKey.length, 'characters');
   sgMail.setApiKey(apiKey);
+  
+  // Verify API key is set
+  if (!sgMail.client.request.defaults.headers || !sgMail.client.request.defaults.headers['Authorization']) {
+    throw new Error('Failed to set SendGrid API key. Please verify the key is correct.');
+  }
+  console.log('✓ API key set successfully');
 
   // Read screenshot file
   let screenshotBuffer = null;
@@ -88,10 +114,21 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
   console.log(`Sending email to ${recipients.length} recipient(s)...`);
   console.log(`From: ${from}`);
   console.log(`Recipients: ${recipients.map(r => r.substring(0, 3) + '***@' + r.split('@')[1]).join(', ')}`);
+  console.log(`API Key prefix: ${apiKey.substring(0, 10)}...`);
+  
   try {
+    console.log('Calling SendGrid API...');
     const response = await sgMail.send(msg);
+    
+    // Validate response
+    if (!response || !Array.isArray(response) || response.length === 0) {
+      throw new Error('Invalid response from SendGrid API');
+    }
+    
     console.log('Email sent successfully!');
     console.log('Status Code:', response[0].statusCode);
+    console.log('Response:', JSON.stringify(response[0], null, 2));
+    
     if (response[0].headers && response[0].headers['x-message-id']) {
       console.log('SendGrid Message ID:', response[0].headers['x-message-id']);
       console.log('');
@@ -100,9 +137,17 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
       console.log('  - Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
       console.log('  - Verify the sender email is verified in SendGrid');
       console.log('  - Check spam/junk folder if email not received');
+    } else {
+      console.warn('⚠️  Warning: No x-message-id in response. Email may not have been sent.');
+      console.warn('   Full response:', JSON.stringify(response[0], null, 2));
     }
   } catch (error) {
-    console.error('Error sending email:', error.message || error);
+    console.error('❌ Error sending email:', error.message || error);
+    
+    // Log full error details
+    console.error('Error type:', error.constructor.name);
+    console.error('Error stack:', error.stack);
+    
     if (error.response) {
       console.error('SendGrid API Error Details:');
       console.error('Status Code:', error.code || error.response.statusCode);
@@ -110,14 +155,26 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
       
       // Provide helpful error messages based on common SendGrid errors
       if (error.response.body?.errors) {
+        console.error('SendGrid Errors:');
         error.response.body.errors.forEach(err => {
-          console.error(`- ${err.message}`);
+          console.error(`  - ${err.message}`);
+          if (err.field) console.error(`    Field: ${err.field}`);
+          if (err.help) console.error(`    Help: ${err.help}`);
         });
       }
+    } else if (error.message) {
+      console.error('Error message:', error.message);
     }
+    
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       throw new Error('Network error connecting to SendGrid. Please check your internet connection.');
     }
+    
+    // Check for API key issues
+    if (error.message && error.message.includes('Unauthorized')) {
+      throw new Error('SendGrid API key is invalid or unauthorized. Please verify your API key in GitHub Secrets.');
+    }
+    
     throw error;
   }
 }
