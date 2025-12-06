@@ -1,5 +1,4 @@
 import puppeteer from 'puppeteer';
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -7,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Takes a screenshot of the graph on the MAGO TAG website
+ * Takes a screenshot of only the graph area on the MAGO TAG website
  * @param {string} url - The URL to screenshot
  * @param {string} outputPath - Path to save the screenshot
  * @returns {Promise<string>} Path to the saved screenshot
@@ -43,23 +42,96 @@ export async function takeScreenshot(url, outputPath = 'screenshot.png') {
     console.log(`Navigating to ${url}...`);
     await page.goto(url, {
       waitUntil: 'networkidle2',
-      timeout: 30000
+      timeout: 60000
     });
 
-    // Wait for the graph to load - adjust selector based on actual page structure
+    // Wait for the graph to load
     console.log('Waiting for graph to load...');
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Give extra time for graph rendering
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
-    // Try to find the graph container - this may need adjustment based on actual page
-    // For now, we'll take a full page screenshot and can crop later if needed
     const screenshotPath = path.join(__dirname, '..', outputPath);
     
-    console.log('Taking screenshot...');
-    await page.screenshot({
-      path: screenshotPath,
-      fullPage: false, // Set to true if you need full page
-      type: 'png'
-    });
+    // Try to capture just the graph element
+    console.log('Looking for graph element...');
+    
+    // Try different selectors for the graph container
+    const graphSelectors = [
+      '[class*="chart"]',
+      '[class*="graph"]',
+      'canvas',
+      'svg',
+      '[class*="apexcharts"]',
+      '[class*="highcharts"]',
+      '[class*="echarts"]',
+      '[class*="recharts"]',
+      'main img',
+      '[role="img"]'
+    ];
+    
+    let graphElement = null;
+    for (const selector of graphSelectors) {
+      try {
+        graphElement = await page.$(selector);
+        if (graphElement) {
+          const box = await graphElement.boundingBox();
+          // Only use if it's a reasonably sized element (graph should be at least 200x200)
+          if (box && box.width >= 200 && box.height >= 200) {
+            console.log(`Found graph element with selector: ${selector}`);
+            break;
+          }
+          graphElement = null;
+        }
+      } catch (e) {
+        // Selector not found, continue
+      }
+    }
+    
+    // If we found a graph element, take a screenshot of just that element
+    if (graphElement) {
+      console.log('Taking screenshot of graph element...');
+      
+      // Get the bounding box and add some padding
+      const box = await graphElement.boundingBox();
+      const padding = 20;
+      
+      await page.screenshot({
+        path: screenshotPath,
+        type: 'png',
+        clip: {
+          x: Math.max(0, box.x - padding),
+          y: Math.max(0, box.y - padding),
+          width: box.width + (padding * 2),
+          height: box.height + (padding * 2)
+        }
+      });
+    } else {
+      // Fall back to capturing the main content area
+      console.log('Graph element not found, capturing main content area...');
+      
+      // Try to find the main content area
+      const mainElement = await page.$('main') || await page.$('[role="main"]');
+      
+      if (mainElement) {
+        await mainElement.screenshot({
+          path: screenshotPath,
+          type: 'png'
+        });
+      } else {
+        // Last resort: capture the viewport without header
+        console.log('Taking viewport screenshot...');
+        await page.screenshot({
+          path: screenshotPath,
+          fullPage: false,
+          type: 'png',
+          clip: {
+            x: 0,
+            y: 100, // Skip header area
+            width: 1920,
+            height: 900
+          }
+        });
+      }
+    }
 
     console.log(`Screenshot saved to ${screenshotPath}`);
     return screenshotPath;
@@ -80,4 +152,3 @@ export async function takeScreenshot(url, outputPath = 'screenshot.png') {
     }
   }
 }
-
