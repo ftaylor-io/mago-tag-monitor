@@ -85,12 +85,22 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
   };
 
   // Send email
-  console.log(`Sending email to ${recipients.join(', ')}...`);
+  console.log(`Sending email to ${recipients.length} recipient(s)...`);
+  console.log(`From: ${from}`);
+  console.log(`Recipients: ${recipients.map(r => r.substring(0, 3) + '***@' + r.split('@')[1]).join(', ')}`);
   try {
     const response = await sgMail.send(msg);
     console.log('Email sent successfully!');
     console.log('Status Code:', response[0].statusCode);
-    console.log('Response Headers:', response[0].headers);
+    if (response[0].headers && response[0].headers['x-message-id']) {
+      console.log('SendGrid Message ID:', response[0].headers['x-message-id']);
+      console.log('');
+      console.log('📧 Email Delivery Status:');
+      console.log('  - Status 202 means SendGrid accepted the email');
+      console.log('  - Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
+      console.log('  - Verify the sender email is verified in SendGrid');
+      console.log('  - Check spam/junk folder if email not received');
+    }
   } catch (error) {
     console.error('Error sending email:', error.message || error);
     if (error.response) {
