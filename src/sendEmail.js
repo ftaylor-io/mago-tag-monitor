@@ -6,9 +6,10 @@ import fs from 'fs';
  * @param {Object} config - Email configuration object
  * @param {string} screenshotPath - Path to the screenshot file
  * @param {Object} assessment - Assessment object from assessCondition
+ * @param {Date} dataTimestamp - Timestamp of the data being reported
  * @returns {Promise<void>}
  */
-export async function sendEmail(config, screenshotPath, assessment) {
+export async function sendEmail(config, screenshotPath, assessment, dataTimestamp) {
   const {
     recipients,
     from,
@@ -62,18 +63,33 @@ export async function sendEmail(config, screenshotPath, assessment) {
     console.warn(`Screenshot file not found at ${screenshotPath}`);
   }
 
+  // Format data timestamp for subtitle
+  const dataTimeStr = dataTimestamp 
+    ? dataTimestamp.toLocaleString('pt-BR', { 
+        timeZone: 'America/Sao_Paulo',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : 'N/A';
+  
+  // Format verification timestamp in São Paulo timezone
+  const verificationTimeStr = new Date().toLocaleString('pt-BR', { 
+    timeZone: 'America/Sao_Paulo'
+  });
+
   // Prepare email content
   const htmlContent = `
     <html>
       <body style="font-family: Arial, sans-serif; padding: 20px;">
         <h2>Monitoramento MAGO TAG - Empacotamento</h2>
+        <p style="margin: 10px 0; color: #666; font-size: 14px;">Leitura realizada às ${dataTimeStr} horas</p>
         <div style="background-color: ${getSeverityColor(assessment.severity)}; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <h3 style="margin: 0; color: white;">${assessment.status}</h3>
           <p style="margin: 10px 0 0 0; color: white; font-size: 18px;">${assessment.message}</p>
         </div>
         ${screenshotBase64 ? `<p><strong>Gráfico atual:</strong></p><img src="data:image/png;base64,${screenshotBase64}" style="max-width: 100%; height: auto;" />` : ''}
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
-          Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
+          Verificação automática realizada em ${verificationTimeStr}
         </p>
       </body>
     </html>
@@ -82,10 +98,12 @@ export async function sendEmail(config, screenshotPath, assessment) {
   const textContent = `
 Monitoramento MAGO TAG - Empacotamento
 
+Leitura realizada às ${dataTimeStr} horas
+
 ${assessment.status}
 ${assessment.message}
 
-Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
+Verificação automática realizada em ${verificationTimeStr}
   `;
 
   // Prepare email message
@@ -95,14 +113,7 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
     subject: subject || 'MAGO TAG - Monitoramento de Empacotamento',
     text: textContent,
     html: htmlContent,
-    attachments: screenshotBuffer ? [
-      {
-        content: screenshotBase64,
-        filename: 'grafico.png',
-        type: 'image/png',
-        disposition: 'attachment'
-      }
-    ] : []
+    attachments: []
   };
 
   // Send email

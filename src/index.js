@@ -131,8 +131,11 @@ async function main() {
     // Step 2: Extract current value from CSV
     console.log('Step 2: Extracting current value from CSV...');
     let currentValue;
+    let dataTimestamp;
     try {
-      currentValue = await extractCurrentValueFromCsv(config.websiteUrl);
+      const result = await extractCurrentValueFromCsv(config.websiteUrl);
+      currentValue = result.value;
+      dataTimestamp = result.timestamp;
       console.log(`✓ Current value: ${currentValue.toLocaleString('pt-BR')}\n`);
     } catch (error) {
       throw new Error(`Failed to extract value from CSV: ${error.message}`);
@@ -153,7 +156,7 @@ async function main() {
     if (!isDryRun) {
       console.log('Step 4: Sending email notification...');
       try {
-        await sendEmail(config.email, screenshotPath, assessment);
+        await sendEmail(config.email, screenshotPath, assessment, dataTimestamp);
         console.log('✓ Email sent successfully\n');
       } catch (error) {
         throw new Error(`Failed to send email: ${error.message}`);
