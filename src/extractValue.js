@@ -37,6 +37,21 @@ export async function extractCurrentValue(url) {
     // Based on the screenshot, the value appears in text like "18h - TAG: 66.445.145"
     // We'll look for the most recent TAG value or the current displayed value
     
+    // Check if the API is offline first
+    const pageStatus = await page.evaluate(() => {
+      const allText = document.body.innerText;
+      // Check for offline/error messages
+      if (allText.includes('está offline') || allText.includes('offline') || 
+          allText.includes('Erro ao carregar') || allText.includes('Erro ao carregar dados')) {
+        return { status: 'offline', message: allText.substring(0, 200) };
+      }
+      return { status: 'online' };
+    });
+
+    if (pageStatus.status === 'offline') {
+      throw new Error(`Website API is offline: ${pageStatus.message}. The backend service appears to be unavailable.`);
+    }
+
     // Try to find the current value from the graph or recent data points
     const extractionResult = await page.evaluate(() => {
       const allText = document.body.innerText;
