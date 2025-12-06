@@ -16,7 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "puppeteer": "^21.6.1",
+    "puppeteer": "^24.32.0",
     "@sendgrid/mail": "^7.7.0",
     "dotenv": "^16.3.1"
   }
