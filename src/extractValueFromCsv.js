@@ -28,7 +28,7 @@ function getLastCompleteHour() {
 /**
  * Parse CSV content and extract the last Empacotamento value for the last complete hour
  * @param {string} csvContent - The CSV file content
- * @returns {{value: number, timestamp: Date}|null} The Empacotamento value and timestamp or null if not found
+ * @returns {{value: number, timestamp: Date, hour: number, minute: number}|null} The Empacotamento value, timestamp, hour, and minute or null if not found
  */
 function parseCsvAndExtractValue(csvContent) {
   const lines = csvContent.trim().split('\n');
@@ -69,6 +69,7 @@ function parseCsvAndExtractValue(csvContent) {
       empacotamentoRows.push({
         date,
         hour: parseInt(hour, 10),
+        minute: parseInt(minute, 10),
         value: valor
       });
     }
@@ -97,14 +98,16 @@ function parseCsvAndExtractValue(csvContent) {
   
   return {
     value: mostRecent.value,
-    timestamp: mostRecent.date
+    timestamp: mostRecent.date,
+    hour: mostRecent.hour,
+    minute: mostRecent.minute
   };
 }
 
 /**
  * Extract the current Empacotamento value from CSV file downloaded from the website
  * @param {string} url - The URL to extract the value from
- * @returns {Promise<{value: number, timestamp: Date}>} The Empacotamento value and timestamp for the last complete hour
+ * @returns {Promise<{value: number, timestamp: Date, hour: number, minute: number}>} The Empacotamento value, timestamp, hour, and minute for the last complete hour
  */
 export async function extractCurrentValueFromCsv(url) {
   let browser = null;

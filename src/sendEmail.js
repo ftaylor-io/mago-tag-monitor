@@ -7,9 +7,11 @@ import fs from 'fs';
  * @param {string} screenshotPath - Path to the screenshot file
  * @param {Object} assessment - Assessment object from assessCondition
  * @param {Date} dataTimestamp - Timestamp of the data being reported
+ * @param {number} dataHour - Hour from CSV (0-23)
+ * @param {number} dataMinute - Minute from CSV (0-59)
  * @returns {Promise<void>}
  */
-export async function sendEmail(config, screenshotPath, assessment, dataTimestamp) {
+export async function sendEmail(config, screenshotPath, assessment, dataTimestamp, dataHour, dataMinute) {
   const {
     recipients,
     from,
@@ -63,13 +65,9 @@ export async function sendEmail(config, screenshotPath, assessment, dataTimestam
     console.warn(`Screenshot file not found at ${screenshotPath}`);
   }
 
-  // Format data timestamp for subtitle
-  const dataTimeStr = dataTimestamp 
-    ? dataTimestamp.toLocaleString('pt-BR', { 
-        timeZone: 'America/Sao_Paulo',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+  // Format data timestamp for subtitle - use hour:minute directly from CSV to avoid timezone conversion issues
+  const dataTimeStr = (dataHour !== undefined && dataMinute !== undefined)
+    ? `${String(dataHour).padStart(2, '0')}:${String(dataMinute).padStart(2, '0')}`
     : 'N/A';
   
   // Format verification timestamp in São Paulo timezone
