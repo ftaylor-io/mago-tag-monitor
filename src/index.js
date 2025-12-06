@@ -1,5 +1,5 @@
 import { takeScreenshot } from './screenshot.js';
-import { extractCurrentValue } from './extractValue.js';
+import { extractCurrentValueFromCsv } from './extractValueFromCsv.js';
 import { assessCondition } from './assessCondition.js';
 import { sendEmail } from './sendEmail.js';
 import fs from 'fs';
@@ -128,14 +128,14 @@ async function main() {
       console.log('Step 1: Taking screenshot... (SKIPPED in dry-run mode)\n');
     }
 
-    // Step 2: Extract current value
-    console.log('Step 2: Extracting current value...');
+    // Step 2: Extract current value from CSV
+    console.log('Step 2: Extracting current value from CSV...');
     let currentValue;
     try {
-      currentValue = await extractCurrentValue(config.websiteUrl);
+      currentValue = await extractCurrentValueFromCsv(config.websiteUrl);
       console.log(`✓ Current value: ${currentValue.toLocaleString('pt-BR')}\n`);
     } catch (error) {
-      throw new Error(`Failed to extract value from ${config.websiteUrl}: ${error.message}`);
+      throw new Error(`Failed to extract value from CSV: ${error.message}`);
     }
 
     // Step 3: Assess condition
