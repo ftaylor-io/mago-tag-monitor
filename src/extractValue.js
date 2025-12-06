@@ -28,7 +28,7 @@ export async function extractCurrentValue(url) {
     });
 
     // Wait for page to fully load
-    await page.waitForTimeout(3000);
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Try multiple strategies to extract the value
     // Strategy 1: Look for text containing "TAG:" followed by a number

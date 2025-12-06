@@ -45,7 +45,7 @@ export async function takeScreenshot(url, outputPath = 'screenshot.png') {
 
     // Wait for the graph to load - adjust selector based on actual page structure
     console.log('Waiting for graph to load...');
-    await page.waitForTimeout(3000); // Give extra time for graph rendering
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Give extra time for graph rendering
 
     // Try to find the graph container - this may need adjustment based on actual page
     // For now, we'll take a full page screenshot and can crop later if needed
