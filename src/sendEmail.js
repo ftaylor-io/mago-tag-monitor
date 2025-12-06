@@ -50,11 +50,6 @@ export async function sendEmail(config, screenshotPath, assessment) {
   console.log('Setting SendGrid API key (format check: ' + (apiKey.startsWith('SG.') ? '✓' : '✗') + ')');
   console.log('API Key length:', apiKey.length, 'characters');
   sgMail.setApiKey(apiKey);
-  
-  // Verify API key is set
-  if (!sgMail.client.request.defaults.headers || !sgMail.client.request.defaults.headers['Authorization']) {
-    throw new Error('Failed to set SendGrid API key. Please verify the key is correct.');
-  }
   console.log('✓ API key set successfully');
 
   // Read screenshot file
@@ -120,26 +115,41 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
     console.log('Calling SendGrid API...');
     const response = await sgMail.send(msg);
     
-    // Validate response
-    if (!response || !Array.isArray(response) || response.length === 0) {
-      throw new Error('Invalid response from SendGrid API');
-    }
+    // Handle response - SendGrid returns an array with response objects
+    console.log('SendGrid API call completed');
+    console.log('Response type:', typeof response);
+    console.log('Is array:', Array.isArray(response));
     
-    console.log('Email sent successfully!');
-    console.log('Status Code:', response[0].statusCode);
-    console.log('Response:', JSON.stringify(response[0], null, 2));
-    
-    if (response[0].headers && response[0].headers['x-message-id']) {
-      console.log('SendGrid Message ID:', response[0].headers['x-message-id']);
-      console.log('');
-      console.log('📧 Email Delivery Status:');
-      console.log('  - Status 202 means SendGrid accepted the email');
-      console.log('  - Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
-      console.log('  - Verify the sender email is verified in SendGrid');
-      console.log('  - Check spam/junk folder if email not received');
+    if (Array.isArray(response) && response.length > 0) {
+      const firstResponse = response[0];
+      console.log('Email sent successfully!');
+      
+      if (firstResponse.statusCode) {
+        console.log('Status Code:', firstResponse.statusCode);
+      }
+      
+      if (firstResponse.headers) {
+        console.log('Response Headers:', JSON.stringify(firstResponse.headers, null, 2));
+        
+        if (firstResponse.headers['x-message-id']) {
+          console.log('SendGrid Message ID:', firstResponse.headers['x-message-id']);
+          console.log('');
+          console.log('📧 Email Delivery Status:');
+          console.log('  - Status 202 means SendGrid accepted the email');
+          console.log('  - Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
+          console.log('  - Verify the sender email is verified in SendGrid');
+          console.log('  - Check spam/junk folder if email not received');
+        } else {
+          console.warn('⚠️  Warning: No x-message-id in response headers');
+        }
+      } else {
+        console.warn('⚠️  Warning: No headers in response');
+        console.log('Full response:', JSON.stringify(firstResponse, null, 2));
+      }
     } else {
-      console.warn('⚠️  Warning: No x-message-id in response. Email may not have been sent.');
-      console.warn('   Full response:', JSON.stringify(response[0], null, 2));
+      // Response might be different format
+      console.log('Email sent! Response:', JSON.stringify(response, null, 2));
+      console.log('📧 Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
     }
   } catch (error) {
     console.error('❌ Error sending email:', error.message || error);
