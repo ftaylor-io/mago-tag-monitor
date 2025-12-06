@@ -46,12 +46,12 @@ export async function extractCurrentValue(url) {
     // Based on the screenshot, the value appears in text like "18h - TAG: 66.445.145"
     // We'll look for the most recent TAG value or the current displayed value
     
-    // Check if the API is offline first
+    // Check if the API is offline - be more specific to avoid false positives
     const pageStatus = await page.evaluate(() => {
       const allText = document.body.innerText;
-      // Check for offline/error messages
-      if (allText.includes('está offline') || allText.includes('offline') || 
-          allText.includes('Erro ao carregar') || allText.includes('Erro ao carregar dados')) {
+      // Only flag as offline if we see the specific "está offline" message
+      // "Erro ao carregar dados" might be temporary, so we'll still try to extract
+      if (allText.includes('está offline') || allText.includes('api-mago-prod-lb.ntag.com.br está offline')) {
         return { status: 'offline', message: allText.substring(0, 200) };
       }
       // Check if graph has loaded by looking for update timestamp
@@ -66,7 +66,9 @@ export async function extractCurrentValue(url) {
     }
     
     if (!pageStatus.hasData) {
-      console.log('Warning: Graph data may not have loaded yet. Attempting extraction anyway...');
+      console.log('Warning: Graph data may not have loaded yet. Waiting a bit more and attempting extraction...');
+      // Wait a bit more if data hasn't loaded
+      await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
     // Try to find the current value from the graph or recent data points
