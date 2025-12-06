@@ -92,9 +92,21 @@ Verificação automática realizada em ${new Date().toLocaleString('pt-BR')}
     console.log('Status Code:', response[0].statusCode);
     console.log('Response Headers:', response[0].headers);
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error sending email:', error.message || error);
     if (error.response) {
-      console.error('Error response body:', error.response.body);
+      console.error('SendGrid API Error Details:');
+      console.error('Status Code:', error.code || error.response.statusCode);
+      console.error('Response Body:', JSON.stringify(error.response.body, null, 2));
+      
+      // Provide helpful error messages based on common SendGrid errors
+      if (error.response.body?.errors) {
+        error.response.body.errors.forEach(err => {
+          console.error(`- ${err.message}`);
+        });
+      }
+    }
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      throw new Error('Network error connecting to SendGrid. Please check your internet connection.');
     }
     throw error;
   }

@@ -65,24 +65,43 @@ async function main() {
 
     // Step 1: Take screenshot
     console.log('Step 1: Taking screenshot...');
-    const screenshotPath = await takeScreenshot(config.websiteUrl);
-    console.log(`✓ Screenshot saved: ${screenshotPath}\n`);
+    let screenshotPath;
+    try {
+      screenshotPath = await takeScreenshot(config.websiteUrl);
+      console.log(`✓ Screenshot saved: ${screenshotPath}\n`);
+    } catch (error) {
+      throw new Error(`Failed to take screenshot from ${config.websiteUrl}: ${error.message}`);
+    }
 
     // Step 2: Extract current value
     console.log('Step 2: Extracting current value...');
-    const currentValue = await extractCurrentValue(config.websiteUrl);
-    console.log(`✓ Current value: ${currentValue.toLocaleString('pt-BR')}\n`);
+    let currentValue;
+    try {
+      currentValue = await extractCurrentValue(config.websiteUrl);
+      console.log(`✓ Current value: ${currentValue.toLocaleString('pt-BR')}\n`);
+    } catch (error) {
+      throw new Error(`Failed to extract value from ${config.websiteUrl}: ${error.message}`);
+    }
 
     // Step 3: Assess condition
     console.log('Step 3: Assessing condition...');
-    const assessment = assessCondition(currentValue, config.thresholds);
-    console.log(`✓ Assessment: ${assessment.status}`);
-    console.log(`  ${assessment.message}\n`);
+    let assessment;
+    try {
+      assessment = assessCondition(currentValue, config.thresholds);
+      console.log(`✓ Assessment: ${assessment.status}`);
+      console.log(`  ${assessment.message}\n`);
+    } catch (error) {
+      throw new Error(`Failed to assess condition: ${error.message}`);
+    }
 
     // Step 4: Send email
     console.log('Step 4: Sending email notification...');
-    await sendEmail(config.email, screenshotPath, assessment);
-    console.log('✓ Email sent successfully\n');
+    try {
+      await sendEmail(config.email, screenshotPath, assessment);
+      console.log('✓ Email sent successfully\n');
+    } catch (error) {
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
 
     // Cleanup screenshot (optional - comment out if you want to keep it)
     // fs.unlinkSync(screenshotPath);
@@ -91,8 +110,14 @@ async function main() {
     console.log('=== Process completed successfully ===');
 
   } catch (error) {
-    console.error('\n❌ Error in main process:', error);
-    console.error('Stack:', error.stack);
+    console.error('\n❌ Error in main process:', error.message || error);
+    if (error.stack && process.env.NODE_ENV !== 'production') {
+      console.error('Stack:', error.stack);
+    }
+    console.error('\nTroubleshooting tips:');
+    console.error('- Check that all required GitHub Secrets are set (SENDGRID_API_KEY, EMAIL_FROM, EMAIL_RECIPIENTS)');
+    console.error('- Verify the website URL is accessible: ' + (config?.websiteUrl || 'https://mago.ntag.com.br/empacotamento'));
+    console.error('- Check SendGrid dashboard for API key validity and rate limits');
     process.exit(1);
   }
 }

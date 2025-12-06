@@ -23,6 +23,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.SENDGRID_API_KEY }}" ]; then
+            echo "❌ Error: SENDGRID_API_KEY secret is not set"
+            echo "Please add it in Repository Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.EMAIL_FROM }}" ]; then
+            echo "❌ Error: EMAIL_FROM secret is not set"
+            echo "Please add it in Repository Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.EMAIL_RECIPIENTS }}" ]; then
+            echo "❌ Error: EMAIL_RECIPIENTS secret is not set"
+            echo "Please add it in Repository Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✅ All required secrets are configured"
+
       - name: Run monitoring script
         run: npm start
         env:

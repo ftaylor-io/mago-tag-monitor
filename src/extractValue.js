@@ -68,7 +68,7 @@ export async function extractCurrentValue(url) {
     });
 
     if (!valueText) {
-      throw new Error('Could not extract value from page');
+      throw new Error('Could not extract value from page. The page structure may have changed or the value is not displayed in the expected format.');
     }
 
     // Convert to number (remove dots used as thousands separators)
@@ -82,7 +82,10 @@ export async function extractCurrentValue(url) {
     return numericValue;
 
   } catch (error) {
-    console.error('Error extracting value:', error);
+    console.error('Error extracting value:', error.message || error);
+    if (error.name === 'TimeoutError') {
+      throw new Error(`Timeout while loading ${url} to extract value. The website may be slow or unreachable.`);
+    }
     throw error;
   } finally {
     if (browser) {

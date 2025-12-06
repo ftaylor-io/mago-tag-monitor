@@ -62,7 +62,13 @@ export async function takeScreenshot(url, outputPath = 'screenshot.png') {
     return screenshotPath;
 
   } catch (error) {
-    console.error('Error taking screenshot:', error);
+    console.error('Error taking screenshot:', error.message || error);
+    if (error.name === 'TimeoutError') {
+      throw new Error(`Timeout while loading ${url}. The website may be slow or unreachable.`);
+    }
+    if (error.message && error.message.includes('net::')) {
+      throw new Error(`Network error accessing ${url}. Please check if the website is accessible.`);
+    }
     throw error;
   } finally {
     if (browser) {
