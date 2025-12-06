@@ -1,0 +1,47 @@
+name: Monitor MAGO TAG Graph
+
+on:
+  schedule:
+    # Run every 2 hours
+    - cron: '0 */2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run monitoring script
+        run: npm start
+        env:
+          NODE_ENV: production
+          WEBSITE_URL: ${{ secrets.WEBSITE_URL || 'https://mago.ntag.com.br/empacotamento' }}
+          CRITICO_PUT: ${{ secrets.CRITICO_PUT || '70500000' }}
+          ALERTA_PUT: ${{ secrets.ALERTA_PUT || '68500000' }}
+          ALERTA_CALL: ${{ secrets.ALERTA_CALL || '66500000' }}
+          CRITICO_CALL: ${{ secrets.CRITICO_CALL || '64000000' }}
+          EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_SUBJECT: ${{ secrets.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empenamento' }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+
+      - name: Upload screenshot artifact (if exists)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot
+          path: screenshot.png
+          retention-days: 1
+

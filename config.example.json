@@ -1,0 +1,19 @@
+{
+  "websiteUrl": "https://mago.ntag.com.br/empacotamento",
+  "thresholds": {
+    "criticoPut": 70500000,
+    "alertaPut": 68500000,
+    "alertaCall": 66500000,
+    "criticoCall": 64000000
+  },
+  "email": {
+    "recipients": [
+      "recipient1@example.com",
+      "recipient2@example.com"
+    ],
+    "from": "your-verified-email@example.com",
+    "subject": "MAGO TAG - Monitoramento de Empenamento",
+    "apiKey": "your-sendgrid-api-key-here"
+  }
+}
+
