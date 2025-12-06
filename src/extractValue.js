@@ -22,6 +22,19 @@ export async function extractCurrentValue(url) {
 
     const page = await browser.newPage();
     
+    // Set up network request monitoring to wait for API calls
+    let apiCallCompleted = false;
+    page.on('response', response => {
+      const url = response.url();
+      // Check if this is the API call that loads graph data
+      if (url.includes('api-mago') || url.includes('empacotamento') || url.includes('dados')) {
+        if (response.status() === 200) {
+          apiCallCompleted = true;
+          console.log('API call completed:', url);
+        }
+      }
+    });
+
     await page.goto(url, {
       waitUntil: 'networkidle2',
       timeout: 30000
@@ -29,15 +42,26 @@ export async function extractCurrentValue(url) {
 
     // Wait for page to fully load and graph to render
     // The graph loads asynchronously, so we need to wait longer
-    await new Promise(resolve => setTimeout(resolve, 8000));
+    console.log('Waiting for graph data to load...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
     
     // Wait for specific elements that indicate the graph has loaded
     try {
-      await page.waitForSelector('canvas, svg, [class*="chart"], [class*="graph"]', { timeout: 10000 });
+      // Wait for the update timestamp which indicates data has loaded
+      await page.waitForFunction(
+        () => {
+          const text = document.body.innerText;
+          return text.includes('Atualizado:') || text.includes('Última verificação:');
+        },
+        { timeout: 15000 }
+      );
+      console.log('Graph data appears to have loaded (timestamp found)');
     } catch (e) {
-      // If no chart selector found, continue anyway
-      console.log('Chart selector not found, continuing with extraction...');
+      console.log('Warning: Graph timestamp not found, but continuing with extraction...');
     }
+    
+    // Additional wait to ensure graph is fully rendered
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Try multiple strategies to extract the value
     // Strategy 1: Look for text containing "TAG:" followed by a number
