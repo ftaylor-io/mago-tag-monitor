@@ -39,3 +39,4 @@ When you make changes to this repository, you MUST:
 - If git is not configured, use: `AUTO_SETUP=1 GIT_USER_NAME="Agent" GIT_USER_EMAIL="agent@example.com" ./scripts/setup-git.sh`
 - Never skip committing changes - this is critical for the workflow
 
+

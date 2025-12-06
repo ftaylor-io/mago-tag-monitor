@@ -2,6 +2,24 @@ import sgMail from '@sendgrid/mail';
 import fs from 'fs';
 
 /**
+ * Get emoji based on severity
+ * @param {string} severity - Severity level ('critical', 'warning', 'neutral')
+ * @returns {string} Emoji indicator
+ */
+function getSeverityEmoji(severity) {
+  switch (severity) {
+    case 'critical':
+      return '🔴'; // Red circle
+    case 'warning':
+      return '🟡'; // Yellow circle
+    case 'neutral':
+      return '🟢'; // Green circle
+    default:
+      return '⚪'; // White circle (fallback)
+  }
+}
+
+/**
  * Sends an email with the screenshot and assessment using SendGrid
  * @param {Object} config - Email configuration object
  * @param {string} screenshotPath - Path to the screenshot file
@@ -104,11 +122,15 @@ ${assessment.message}
 Verificação automática realizada em ${verificationTimeStr}
   `;
 
-  // Prepare email message
+  // Prepare email message with dynamic subject including classification and emoji
+  const baseSubject = subject || 'MAGO TAG - Monitoramento de Empacotamento';
+  const emoji = getSeverityEmoji(assessment.severity);
+  const dynamicSubject = `${emoji} [${assessment.status}] ${baseSubject}`;
+
   const msg = {
     to: recipients,
     from: from,
-    subject: subject || 'MAGO TAG - Monitoramento de Empacotamento',
+    subject: dynamicSubject,
     text: textContent,
     html: htmlContent,
     attachments: []
