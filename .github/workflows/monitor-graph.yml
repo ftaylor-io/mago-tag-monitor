@@ -53,7 +53,7 @@ jobs:
           CRITICO_CALL: ${{ secrets.CRITICO_CALL || '64000000' }}
           EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_SUBJECT: ${{ secrets.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empenamento' }}
+          EMAIL_SUBJECT: ${{ secrets.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empacotamento' }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
 
       - name: Upload screenshot artifact (if exists)
