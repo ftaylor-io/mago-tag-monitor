@@ -22,6 +22,9 @@ export async function extractCurrentValue(url) {
 
     const page = await browser.newPage();
     
+    // Set a realistic user-agent to avoid being blocked
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    
     // Set up network request monitoring to wait for API calls
     let apiCallCompleted = false;
     page.on('response', response => {
