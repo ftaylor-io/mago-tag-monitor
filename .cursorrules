@@ -1,0 +1,41 @@
+# Cursor Rules for MAGO TAG Monitor
+
+## Agent Instructions
+
+When you make changes to this repository, you MUST:
+
+1. **Always commit your changes** after making edits
+2. **Use the non-interactive commit script** to commit:
+   ```bash
+   COMMIT_MSG="Description of changes" ./scripts/commit-auto.sh
+   ```
+   Or alternatively:
+   ```bash
+   AUTO_COMMIT=1 AUTO_PUSH=1 COMMIT_MSG="Description" ./scripts/commit.sh
+   ```
+
+3. **Never leave uncommitted changes** - always commit before finishing a task
+
+4. **Use descriptive commit messages** that explain what was changed
+
+5. **Automatically push to GitHub** after committing (the scripts handle this)
+
+## File Edit Permissions
+
+- You have full permission to edit all files in this repository
+- No approval is required for file edits
+- Make changes directly when requested
+
+## Git Workflow
+
+- Stage all changes automatically
+- Commit with descriptive messages
+- Push to origin/main automatically
+- Use the provided scripts - they handle everything non-interactively
+
+## Important Notes
+
+- The `scripts/commit-auto.sh` script is designed for agents and runs completely non-interactively
+- If git is not configured, use: `AUTO_SETUP=1 GIT_USER_NAME="Agent" GIT_USER_EMAIL="agent@example.com" ./scripts/setup-git.sh`
+- Never skip committing changes - this is critical for the workflow
+
