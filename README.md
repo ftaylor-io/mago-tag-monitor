@@ -27,16 +27,15 @@ The system assesses values based on these thresholds:
 
 1. **Fork or create a new GitHub repository** with this code
 
-2. **Set up SendGrid Account**:
-   - Sign up for a free account at https://sendgrid.com
-   - Verify your sender email address in SendGrid dashboard
-   - Create an API key: Settings → API Keys → Create API Key
-   - Give it "Mail Send" permissions
+2. **Set up Resend Account**:
+   - Sign up for a free account at https://resend.com
+   - Verify your sender domain or email in Resend dashboard
+   - Create an API key in the Resend dashboard
    - Copy the API key (you won't see it again!)
 
 3. **Set up GitHub Secrets** (Repository Settings → Secrets and variables → Actions):
-   - `SENDGRID_API_KEY`: Your SendGrid API key
-   - `EMAIL_FROM`: Your verified sender email address (must be verified in SendGrid)
+   - `RESEND_API_KEY`: Your Resend API key
+   - `EMAIL_FROM`: Your verified sender email address (must be verified in Resend)
    - `EMAIL_RECIPIENTS`: Comma-separated list or JSON array, e.g., `email1@example.com,email2@example.com` or `["email1@example.com", "email2@example.com"]`
    - `EMAIL_SUBJECT`: (Optional) Custom email subject
    - `WEBSITE_URL`: (Optional) Defaults to `https://mago.ntag.com.br/empacotamento`
@@ -63,13 +62,13 @@ The system assesses values based on these thresholds:
 
 3. **Edit `config.json`** with your settings:
    - Add email recipients
-   - Add your SendGrid API key
+   - Add your Resend API key
    - Add your verified sender email address
 
-4. **Set up SendGrid** (if not already done):
-   - Sign up at https://sendgrid.com (free account)
-   - Verify your sender email address
-   - Create an API key with "Mail Send" permissions
+4. **Set up Resend** (if not already done):
+   - Sign up at https://resend.com (free account)
+   - Verify your sender domain or email
+   - Create an API key
 
 5. **Run manually**:
    ```bash
@@ -81,25 +80,21 @@ The system assesses values based on these thresholds:
 Instead of `config.json`, you can use environment variables:
 
 ```bash
-export SENDGRID_API_KEY="your-sendgrid-api-key"
+export RESEND_API_KEY="your-resend-api-key"
 export EMAIL_RECIPIENTS="email1@example.com,email2@example.com"
 export EMAIL_FROM="your-verified-email@example.com"
 npm start
 ```
 
-## SendGrid Setup
+## Resend Setup
 
-1. **Create Account**: Sign up at https://sendgrid.com (free tier available)
-2. **Verify Sender**: Go to Settings → Sender Authentication → Verify a Single Sender
-   - Enter your email address
-   - Check your email and click the verification link
-3. **Create API Key**: 
-   - Go to Settings → API Keys → Create API Key
+1. **Create Account**: Sign up at https://resend.com (free tier available)
+2. **Verify Sender**: Verify a sender domain or a single sender email in the Resend dashboard
+3. **Create API Key**:
+   - Go to the API Keys section
    - Name it (e.g., "MAGO TAG Monitor")
-   - Select "Mail Send" permission
-   - Click "Create & View"
-   - **Copy the API key immediately** (starts with `SG.`)
-4. **Free Tier Limits**: 100 emails/day (sufficient for twice daily checks = 2 emails/day)
+   - **Copy the API key immediately** (usually starts with `re_`)
+4. **Free Tier Limits**: Check Resend's current free tier limits for your account
 
 ## Project Structure
 
@@ -134,11 +129,11 @@ MAGO_TAG/
 - Ensure the website's CSV export functionality is working
 
 ### Email not sending
-- Verify SendGrid API key is correct and has "Mail Send" permission
-- Ensure your sender email is verified in SendGrid dashboard
-- Check SendGrid dashboard for any error messages or rate limits
+- Verify Resend API key is correct and active
+- Ensure your sender email/domain is verified in Resend dashboard
+- Check Resend dashboard for any error messages or rate limits
 - Verify recipient emails are valid
-- Check SendGrid activity feed for delivery status
+- Check Resend logs for delivery status
 
 ### Screenshot is blank or wrong area
 - Adjust the viewport size in `src/screenshot.js`
@@ -148,10 +143,9 @@ MAGO_TAG/
 ## Cost
 
 - **GitHub Actions**: 2,000 minutes/month free (sufficient for twice daily checks = ~60 minutes/month)
-- **SendGrid**: Free tier includes 100 emails/day (sufficient for twice daily checks = 2 emails/day)
+- **Resend**: Free tier limits vary by plan (sufficient for twice daily checks in most cases)
 - **Total Cost**: **$0**
 
 ## License
 
 ISC
-
