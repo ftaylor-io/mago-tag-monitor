@@ -1,4 +1,3 @@
-import sgMail from '@sendgrid/mail';
 import fs from 'fs';
 
 /**
@@ -20,7 +19,7 @@ function getSeverityEmoji(severity) {
 }
 
 /**
- * Sends an email with the screenshot and assessment using SendGrid
+ * Sends an email with the screenshot and assessment using Resend
  * @param {Object} config - Email configuration object
  * @param {string} screenshotPath - Path to the screenshot file
  * @param {Object} assessment - Assessment object from assessCondition
@@ -38,12 +37,12 @@ export async function sendEmail(config, screenshotPath, assessment, dataTimestam
   } = config;
 
   if (!apiKey) {
-    throw new Error('SendGrid API key is required');
+    throw new Error('Resend API key is required');
   }
 
-  // Validate API key format (should start with SG.)
-  if (!apiKey.startsWith('SG.')) {
-    console.warn('⚠️  Warning: SendGrid API key should start with "SG."');
+  // Validate API key format (Resend keys typically start with "re_")
+  if (!apiKey.startsWith('re_')) {
+    console.warn('⚠️  Warning: Resend API key usually starts with "re_"');
     console.warn('   Current key format:', apiKey.substring(0, 5) + '...');
   }
 
@@ -67,11 +66,10 @@ export async function sendEmail(config, screenshotPath, assessment, dataTimestam
     }
   });
 
-  // Set SendGrid API key
-  console.log('Setting SendGrid API key (format check: ' + (apiKey.startsWith('SG.') ? '✓' : '✗') + ')');
+  // Prepare Resend API usage
+  console.log('Preparing Resend API request (format check: ' + (apiKey.startsWith('re_') ? '✓' : '✗') + ')');
   console.log('API Key length:', apiKey.length, 'characters');
-  sgMail.setApiKey(apiKey);
-  console.log('✓ API key set successfully');
+  console.log('✓ Resend API key loaded');
 
   // Read screenshot file
   let screenshotBuffer = null;
@@ -127,60 +125,56 @@ Verificação automática realizada em ${verificationTimeStr}
   const emoji = getSeverityEmoji(assessment.severity);
   const dynamicSubject = `${emoji} [${assessment.status}] ${baseSubject}`;
 
+  const effectiveFrom = 'onboarding@resend.dev';
+  const replyTo = 'intel@saturnotrading.com.br';
+
   const msg = {
     to: recipients,
-    from: from,
+    from: effectiveFrom,
+    reply_to: replyTo,
     subject: dynamicSubject,
     text: textContent,
     html: htmlContent,
-    attachments: []
+    attachments: screenshotBase64 ? [{
+      filename: 'grafico.png',
+      content: screenshotBase64,
+      type: 'image/png'
+    }] : []
   };
 
   // Send email
   console.log(`Sending email to ${recipients.length} recipient(s)...`);
-  console.log(`From: ${from}`);
+  console.log(`From: ${effectiveFrom} (reply-to: ${replyTo})`);
   console.log(`Recipients: ${recipients.map(r => r.substring(0, 3) + '***@' + r.split('@')[1]).join(', ')}`);
   console.log(`API Key prefix: ${apiKey.substring(0, 10)}...`);
   
   try {
-    console.log('Calling SendGrid API...');
-    const response = await sgMail.send(msg);
-    
-    // Handle response - SendGrid returns an array with response objects
-    console.log('SendGrid API call completed');
-    console.log('Response type:', typeof response);
-    console.log('Is array:', Array.isArray(response));
-    
-    if (Array.isArray(response) && response.length > 0) {
-      const firstResponse = response[0];
+    console.log('Calling Resend API...');
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(msg)
+    });
+
+    const responseBody = await response.json().catch(() => ({}));
+    console.log('Resend API call completed');
+
+    if (!response.ok) {
+      const errorMessage = responseBody?.message || responseBody?.error || 'Unknown error from Resend API';
+      const error = new Error(`Resend API request failed (${response.status}): ${errorMessage}`);
+      error.response = responseBody;
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    if (responseBody?.id) {
       console.log('Email sent successfully!');
-      
-      if (firstResponse.statusCode) {
-        console.log('Status Code:', firstResponse.statusCode);
-      }
-      
-      if (firstResponse.headers) {
-        console.log('Response Headers:', JSON.stringify(firstResponse.headers, null, 2));
-        
-        if (firstResponse.headers['x-message-id']) {
-          console.log('SendGrid Message ID:', firstResponse.headers['x-message-id']);
-          console.log('');
-          console.log('📧 Email Delivery Status:');
-          console.log('  - Status 202 means SendGrid accepted the email');
-          console.log('  - Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
-          console.log('  - Verify the sender email is verified in SendGrid');
-          console.log('  - Check spam/junk folder if email not received');
-        } else {
-          console.warn('⚠️  Warning: No x-message-id in response headers');
-        }
-      } else {
-        console.warn('⚠️  Warning: No headers in response');
-        console.log('Full response:', JSON.stringify(firstResponse, null, 2));
-      }
+      console.log('Resend Message ID:', responseBody.id);
     } else {
-      // Response might be different format
-      console.log('Email sent! Response:', JSON.stringify(response, null, 2));
-      console.log('📧 Check your SendGrid Activity Feed: https://app.sendgrid.com/activity');
+      console.log('Email sent! Response:', JSON.stringify(responseBody, null, 2));
     }
   } catch (error) {
     console.error('❌ Error sending email:', error.message || error);
@@ -190,30 +184,20 @@ Verificação automática realizada em ${verificationTimeStr}
     console.error('Error stack:', error.stack);
     
     if (error.response) {
-      console.error('SendGrid API Error Details:');
+      console.error('Resend API Error Details:');
       console.error('Status Code:', error.code || error.response.statusCode);
-      console.error('Response Body:', JSON.stringify(error.response.body, null, 2));
-      
-      // Provide helpful error messages based on common SendGrid errors
-      if (error.response.body?.errors) {
-        console.error('SendGrid Errors:');
-        error.response.body.errors.forEach(err => {
-          console.error(`  - ${err.message}`);
-          if (err.field) console.error(`    Field: ${err.field}`);
-          if (err.help) console.error(`    Help: ${err.help}`);
-        });
-      }
+      console.error('Response Body:', JSON.stringify(error.response, null, 2));
     } else if (error.message) {
       console.error('Error message:', error.message);
     }
     
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw new Error('Network error connecting to SendGrid. Please check your internet connection.');
+      throw new Error('Network error connecting to Resend. Please check your internet connection.');
     }
     
     // Check for API key issues
     if (error.message && error.message.includes('Unauthorized')) {
-      throw new Error('SendGrid API key is invalid or unauthorized. Please verify your API key in GitHub Secrets.');
+      throw new Error('Resend API key is invalid or unauthorized. Please verify your API key in GitHub Secrets.');
     }
     
     throw error;

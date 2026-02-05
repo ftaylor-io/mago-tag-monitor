@@ -94,7 +94,7 @@ async function main() {
               process.env.EMAIL_RECIPIENTS.split(',').map(e => e.trim())) : [],
           from: process.env.EMAIL_FROM,
           subject: process.env.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empacotamento',
-          apiKey: process.env.SENDGRID_API_KEY
+          apiKey: process.env.RESEND_API_KEY
         }
       };
     }
@@ -102,7 +102,7 @@ async function main() {
     // Validate configuration (skip email validation in dry-run mode)
     if (!isDryRun) {
       if (!config.email.apiKey) {
-        throw new Error('SendGrid API key must be provided via config.json or environment variable (SENDGRID_API_KEY)');
+        throw new Error('Resend API key must be provided via config.json or environment variable (RESEND_API_KEY)');
       }
 
       if (!config.email.from) {
@@ -201,14 +201,13 @@ async function main() {
       console.error('Stack:', error.stack);
     }
     console.error('\nTroubleshooting tips:');
-    console.error('- Check that all required GitHub Secrets are set (SENDGRID_API_KEY, EMAIL_FROM, EMAIL_RECIPIENTS)');
+    console.error('- Check that all required GitHub Secrets are set (RESEND_API_KEY, EMAIL_FROM, EMAIL_RECIPIENTS)');
     const websiteUrl = config?.websiteUrl || process.env.WEBSITE_URL || 'https://mago.ntag.com.br/empacotamento';
     console.error('- Verify the website URL is accessible: ' + websiteUrl);
-    console.error('- Check SendGrid dashboard for API key validity and rate limits');
+    console.error('- Check Resend dashboard for API key validity and rate limits');
     process.exit(1);
   }
 }
 
 // Run main function
 main();
-
