@@ -2,24 +2,21 @@
 
 Follow these steps to get your MAGO TAG monitor running on GitHub Actions.
 
-## Step 1: Set Up SendGrid Account
+## Step 1: Set Up Resend Account
 
-1. **Sign up for SendGrid**: Go to https://sendgrid.com and create a free account
-   - Free tier includes 100 emails/day (sufficient for twice daily checks)
+1. **Sign up for Resend**: Go to https://resend.com and create a free account
+   - Check Resend's current free tier limits for your account
 
-2. **Verify Your Sender Email**:
-   - Go to SendGrid Dashboard → Settings → Sender Authentication
-   - Click "Verify a Single Sender"
-   - Enter your email address and fill in the required information
-   - Check your email inbox and click the verification link
-   - **Important**: You can only send emails FROM verified addresses
+2. **Verify Your Sender Domain or Email**:
+   - Go to Resend Dashboard → Domains or Single Sender
+   - Verify your domain or a single sender email
+   - **Important**: You can only send emails FROM verified senders
 
 3. **Create an API Key**:
-   - Go to Settings → API Keys → "Create API Key"
+   - Go to API Keys → "Create API Key"
    - Name it (e.g., "MAGO TAG Monitor")
-   - Select **"Mail Send"** permission (full access)
-   - Click "Create & View"
-   - **Copy the API key immediately** (it starts with `SG.` and you won't see it again!)
+   - Click "Create"
+   - **Copy the API key immediately** (usually starts with `re_` and you won't see it again!)
    - Save it securely - you'll need it for Step 4
 
 ## Step 2: Create GitHub Repository
@@ -69,13 +66,13 @@ git push -u origin main
 
 ### Required Secrets:
 
-**SENDGRID_API_KEY**
-- Name: `SENDGRID_API_KEY`
-- Value: Your SendGrid API key from Step 1 (starts with `SG.`)
+**RESEND_API_KEY**
+- Name: `RESEND_API_KEY`
+- Value: Your Resend API key from Step 1 (usually starts with `re_`)
 
 **EMAIL_FROM**
 - Name: `EMAIL_FROM`
-- Value: Your verified sender email address (must be verified in SendGrid)
+- Value: Your verified sender email address (must be verified in Resend)
 
 **EMAIL_RECIPIENTS**
 - Name: `EMAIL_RECIPIENTS`
@@ -126,11 +123,10 @@ git push -u origin main
 ## Troubleshooting
 
 ### "Email not sending"
-- Verify your SendGrid API key is correct (starts with `SG.`)
-- Ensure your sender email is verified in SendGrid dashboard
-- Check SendGrid activity feed for delivery status and errors
-- Verify the API key has "Mail Send" permission
-- Check if you've hit the free tier limit (100 emails/day)
+- Verify your Resend API key is correct (usually starts with `re_`)
+- Ensure your sender email/domain is verified in Resend dashboard
+- Check Resend logs for delivery status and errors
+- Check if you've hit the free tier limit
 
 ### "Could not extract value"
 - The website structure may have changed
@@ -161,4 +157,3 @@ Once everything is working:
 ---
 
 **Need Help?** Check the main README.md for more details on configuration and troubleshooting.
-

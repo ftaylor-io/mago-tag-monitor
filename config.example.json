@@ -13,7 +13,6 @@
     ],
     "from": "your-verified-email@example.com",
     "subject": "MAGO TAG - Monitoramento de Empacotamento",
-    "apiKey": "your-sendgrid-api-key-here"
+    "apiKey": "your-resend-api-key-here"
   }
 }
-

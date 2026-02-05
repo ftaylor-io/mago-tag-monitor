@@ -30,8 +30,8 @@ jobs:
 
       - name: Validate required secrets
         run: |
-          if [ -z "${{ secrets.SENDGRID_API_KEY }}" ]; then
-            echo "❌ Error: SENDGRID_API_KEY secret is not set"
+          if [ -z "${{ secrets.RESEND_API_KEY }}" ]; then
+            echo "❌ Error: RESEND_API_KEY secret is not set"
             echo "Please add it in Repository Settings → Secrets and variables → Actions"
             exit 1
           fi
@@ -59,7 +59,7 @@ jobs:
           EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_SUBJECT: ${{ secrets.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empacotamento' }}
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
       - name: Upload screenshot artifact (if exists)
         if: always()
@@ -68,4 +68,3 @@ jobs:
           name: screenshot
           path: screenshot.png
           retention-days: 1
-
