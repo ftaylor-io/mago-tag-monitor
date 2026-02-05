@@ -125,9 +125,13 @@ Verificação automática realizada em ${verificationTimeStr}
   const emoji = getSeverityEmoji(assessment.severity);
   const dynamicSubject = `${emoji} [${assessment.status}] ${baseSubject}`;
 
+  const effectiveFrom = 'onboarding@resend.dev';
+  const replyTo = 'intel@saturnotrading.com.br';
+
   const msg = {
     to: recipients,
-    from: from,
+    from: effectiveFrom,
+    reply_to: replyTo,
     subject: dynamicSubject,
     text: textContent,
     html: htmlContent,
@@ -140,7 +144,7 @@ Verificação automática realizada em ${verificationTimeStr}
 
   // Send email
   console.log(`Sending email to ${recipients.length} recipient(s)...`);
-  console.log(`From: ${from}`);
+  console.log(`From: ${effectiveFrom} (reply-to: ${replyTo})`);
   console.log(`Recipients: ${recipients.map(r => r.substring(0, 3) + '***@' + r.split('@')[1]).join(', ')}`);
   console.log(`API Key prefix: ${apiKey.substring(0, 10)}...`);
   
