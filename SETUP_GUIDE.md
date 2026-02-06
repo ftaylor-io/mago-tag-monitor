@@ -72,7 +72,8 @@ git push -u origin main
 
 **EMAIL_FROM**
 - Name: `EMAIL_FROM`
-- Value: Your verified sender email address (must be verified in Resend)
+- Value: `intel@saturnotrading.com.br` (or another verified sender)
+- Note: This can be omitted if you want to use the code default sender (`intel@saturnotrading.com.br`)
 
 **EMAIL_RECIPIENTS**
 - Name: `EMAIL_RECIPIENTS`
@@ -81,6 +82,10 @@ git push -u origin main
   - OR JSON array: `["email1@example.com","email2@example.com","email3@example.com"]`
 
 ### Optional Secrets (only if you want to customize):
+
+**EMAIL_REPLY_TO**
+- Name: `EMAIL_REPLY_TO`
+- Value: `intel@saturnotrading.com.br` (optional; default is this same value)
 
 **EMAIL_SUBJECT**
 - Name: `EMAIL_SUBJECT`

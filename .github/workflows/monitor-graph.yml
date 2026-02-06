@@ -35,11 +35,6 @@ jobs:
             echo "Please add it in Repository Settings → Secrets and variables → Actions"
             exit 1
           fi
-          if [ -z "${{ secrets.EMAIL_FROM }}" ]; then
-            echo "❌ Error: EMAIL_FROM secret is not set"
-            echo "Please add it in Repository Settings → Secrets and variables → Actions"
-            exit 1
-          fi
           if [ -z "${{ secrets.EMAIL_RECIPIENTS }}" ]; then
             echo "❌ Error: EMAIL_RECIPIENTS secret is not set"
             echo "Please add it in Repository Settings → Secrets and variables → Actions"
@@ -57,7 +52,8 @@ jobs:
           ALERTA_CALL: ${{ secrets.ALERTA_CALL || '66500000' }}
           CRITICO_CALL: ${{ secrets.CRITICO_CALL || '64000000' }}
           EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'intel@saturnotrading.com.br' }}
+          EMAIL_REPLY_TO: ${{ secrets.EMAIL_REPLY_TO || 'intel@saturnotrading.com.br' }}
           EMAIL_SUBJECT: ${{ secrets.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empacotamento' }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 

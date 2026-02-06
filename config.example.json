@@ -11,7 +11,8 @@
       "recipient1@example.com",
       "recipient2@example.com"
     ],
-    "from": "your-verified-email@example.com",
+    "from": "intel@saturnotrading.com.br",
+    "replyTo": "intel@saturnotrading.com.br",
     "subject": "MAGO TAG - Monitoramento de Empacotamento",
     "apiKey": "your-resend-api-key-here"
   }

@@ -92,8 +92,9 @@ async function main() {
             (process.env.EMAIL_RECIPIENTS.startsWith('[') ? 
               JSON.parse(process.env.EMAIL_RECIPIENTS) : 
               process.env.EMAIL_RECIPIENTS.split(',').map(e => e.trim())) : [],
-          from: process.env.EMAIL_FROM,
+          from: process.env.EMAIL_FROM || 'intel@saturnotrading.com.br',
           subject: process.env.EMAIL_SUBJECT || 'MAGO TAG - Monitoramento de Empacotamento',
+          replyTo: process.env.EMAIL_REPLY_TO || 'intel@saturnotrading.com.br',
           apiKey: process.env.RESEND_API_KEY
         }
       };
@@ -103,10 +104,6 @@ async function main() {
     if (!isDryRun) {
       if (!config.email.apiKey) {
         throw new Error('Resend API key must be provided via config.json or environment variable (RESEND_API_KEY)');
-      }
-
-      if (!config.email.from) {
-        throw new Error('From email address must be provided via config.json or environment variable (EMAIL_FROM)');
       }
 
       if (!config.email.recipients || config.email.recipients.length === 0) {
@@ -201,7 +198,8 @@ async function main() {
       console.error('Stack:', error.stack);
     }
     console.error('\nTroubleshooting tips:');
-    console.error('- Check that all required GitHub Secrets are set (RESEND_API_KEY, EMAIL_FROM, EMAIL_RECIPIENTS)');
+    console.error('- Check that required GitHub Secrets are set (RESEND_API_KEY, EMAIL_RECIPIENTS)');
+    console.error('- Optional: EMAIL_REPLY_TO for custom Reply-To header');
     const websiteUrl = config?.websiteUrl || process.env.WEBSITE_URL || 'https://mago.ntag.com.br/empacotamento';
     console.error('- Verify the website URL is accessible: ' + websiteUrl);
     console.error('- Check Resend dashboard for API key validity and rate limits');
