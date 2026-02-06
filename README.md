@@ -35,7 +35,7 @@ The system assesses values based on these thresholds:
 
 3. **Set up GitHub Secrets** (Repository Settings → Secrets and variables → Actions):
    - `RESEND_API_KEY`: Your Resend API key
-   - `EMAIL_FROM`: Your verified sender email address (must be verified in Resend)
+   - `EMAIL_FROM`: Optional override for sender email (default: `intel@saturnotrading.com.br`; must be verified in Resend)
    - `EMAIL_RECIPIENTS`: Comma-separated list or JSON array, e.g., `email1@example.com,email2@example.com` or `["email1@example.com", "email2@example.com"]`
    - `EMAIL_SUBJECT`: (Optional) Custom email subject
    - `WEBSITE_URL`: (Optional) Defaults to `https://mago.ntag.com.br/empacotamento`
@@ -82,7 +82,7 @@ Instead of `config.json`, you can use environment variables:
 ```bash
 export RESEND_API_KEY="your-resend-api-key"
 export EMAIL_RECIPIENTS="email1@example.com,email2@example.com"
-export EMAIL_FROM="your-verified-email@example.com"
+export EMAIL_FROM="intel@saturnotrading.com.br"
 npm start
 ```
 

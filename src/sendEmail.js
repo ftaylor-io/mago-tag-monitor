@@ -32,6 +32,7 @@ export async function sendEmail(config, screenshotPath, assessment, dataTimestam
   const {
     recipients,
     from,
+    replyTo,
     subject,
     apiKey
   } = config;
@@ -50,14 +51,17 @@ export async function sendEmail(config, screenshotPath, assessment, dataTimestam
     throw new Error('At least one email recipient is required');
   }
 
-  if (!from) {
-    throw new Error('From email address is required');
-  }
-
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(from)) {
-    throw new Error(`Invalid from email format: ${from}`);
+  const effectiveFrom = from || process.env.EMAIL_FROM || 'intel@saturnotrading.com.br';
+  const effectiveReplyTo = replyTo || process.env.EMAIL_REPLY_TO || 'intel@saturnotrading.com.br';
+
+  if (!emailRegex.test(effectiveFrom)) {
+    throw new Error(`Invalid from email format: ${effectiveFrom}`);
+  }
+
+  if (effectiveReplyTo && !emailRegex.test(effectiveReplyTo)) {
+    throw new Error(`Invalid reply-to email format: ${effectiveReplyTo}`);
   }
 
   recipients.forEach((recipient, index) => {
@@ -125,13 +129,10 @@ Verificação automática realizada em ${verificationTimeStr}
   const emoji = getSeverityEmoji(assessment.severity);
   const dynamicSubject = `${emoji} [${assessment.status}] ${baseSubject}`;
 
-  const effectiveFrom = 'onboarding@resend.dev';
-  const replyTo = 'intel@saturnotrading.com.br';
-
   const msg = {
     to: recipients,
     from: effectiveFrom,
-    reply_to: replyTo,
+    reply_to: effectiveReplyTo,
     subject: dynamicSubject,
     text: textContent,
     html: htmlContent,
@@ -144,7 +145,7 @@ Verificação automática realizada em ${verificationTimeStr}
 
   // Send email
   console.log(`Sending email to ${recipients.length} recipient(s)...`);
-  console.log(`From: ${effectiveFrom} (reply-to: ${replyTo})`);
+  console.log(`From: ${effectiveFrom} (reply-to: ${effectiveReplyTo})`);
   console.log(`Recipients: ${recipients.map(r => r.substring(0, 3) + '***@' + r.split('@')[1]).join(', ')}`);
   console.log(`API Key prefix: ${apiKey.substring(0, 10)}...`);
   
