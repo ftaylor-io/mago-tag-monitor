@@ -82,10 +82,10 @@ async function main() {
       config = {
         websiteUrl: process.env.WEBSITE_URL || 'https://mago.ntag.com.br/empacotamento',
         thresholds: {
-          criticoPut: parseInt(process.env.CRITICO_PUT) || 70500000,
-          alertaPut: parseInt(process.env.ALERTA_PUT) || 68500000,
-          alertaCall: parseInt(process.env.ALERTA_CALL) || 66500000,
-          criticoCall: parseInt(process.env.CRITICO_CALL) || 64000000
+          criticoPut: parseInt(process.env.CRITICO_PUT) || 73500000,
+          alertaPut: parseInt(process.env.ALERTA_PUT) || 71500000,
+          alertaCall: parseInt(process.env.ALERTA_CALL) || 69500000,
+          criticoCall: parseInt(process.env.CRITICO_CALL) || 67000000
         },
         email: {
           recipients: process.env.EMAIL_RECIPIENTS ? 

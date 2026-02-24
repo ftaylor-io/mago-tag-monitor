@@ -6,10 +6,10 @@
  */
 export function assessCondition(currentValue, thresholds) {
   const {
-    criticoPut = 70500000,
-    alertaPut = 68500000,
-    alertaCall = 66500000,
-    criticoCall = 64000000
+    criticoPut = 73500000,
+    alertaPut = 71500000,
+    alertaCall = 69500000,
+    criticoCall = 67000000
   } = thresholds;
 
   let status;
@@ -45,5 +45,4 @@ export function assessCondition(currentValue, thresholds) {
     currentValue
   };
 }
-
 
