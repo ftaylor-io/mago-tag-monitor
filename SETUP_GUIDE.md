@@ -96,10 +96,10 @@ git push -u origin main
 - Value: Only if URL changes (default: `https://mago.ntag.com.br/empacotamento`)
 
 **Threshold values** (only if different from defaults):
-- `CRITICO_PUT` (default: 70500000)
-- `ALERTA_PUT` (default: 68500000)
-- `ALERTA_CALL` (default: 66500000)
-- `CRITICO_CALL` (default: 64000000)
+- `CRITICO_PUT` (default: 73500000)
+- `ALERTA_PUT` (default: 71500000)
+- `ALERTA_CALL` (default: 69500000)
+- `CRITICO_CALL` (default: 67000000)
 
 ## Step 5: Test the Workflow
 

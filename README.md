@@ -15,11 +15,11 @@ Automated monitoring system for the MAGO TAG graph at https://mago.ntag.com.br/e
 
 The system assesses values based on these thresholds:
 
-- **Crítico PUT**: ≥ 70,500,000
-- **Alerta PUT**: ≥ 68,500,000
-- **Neutro**: 66,500,000 < value < 68,500,000
-- **Alerta CALL**: ≥ 64,000,000 and ≤ 66,500,000
-- **Crítico CALL**: < 64,000,000
+- **Crítico PUT**: ≥ 73,500,000
+- **Alerta PUT**: ≥ 71,500,000
+- **Neutro**: 69,500,000 < value < 71,500,000
+- **Alerta CALL**: ≥ 67,000,000 and ≤ 69,500,000
+- **Crítico CALL**: < 67,000,000
 
 ## Setup Instructions
 
@@ -39,10 +39,10 @@ The system assesses values based on these thresholds:
    - `EMAIL_RECIPIENTS`: Comma-separated list or JSON array, e.g., `email1@example.com,email2@example.com` or `["email1@example.com", "email2@example.com"]`
    - `EMAIL_SUBJECT`: (Optional) Custom email subject
    - `WEBSITE_URL`: (Optional) Defaults to `https://mago.ntag.com.br/empacotamento`
-   - `CRITICO_PUT`: (Optional) Defaults to `70500000`
-   - `ALERTA_PUT`: (Optional) Defaults to `68500000`
-   - `ALERTA_CALL`: (Optional) Defaults to `66500000`
-   - `CRITICO_CALL`: (Optional) Defaults to `64000000`
+   - `CRITICO_PUT`: (Optional) Defaults to `73500000`
+   - `ALERTA_PUT`: (Optional) Defaults to `71500000`
+   - `ALERTA_CALL`: (Optional) Defaults to `69500000`
+   - `CRITICO_CALL`: (Optional) Defaults to `67000000`
 
 4. **Enable GitHub Actions** - The workflow will automatically run twice daily (9:15 AM and 6:15 PM São Paulo time)
 
