@@ -47,10 +47,10 @@ jobs:
         env:
           NODE_ENV: production
           WEBSITE_URL: ${{ secrets.WEBSITE_URL || 'https://mago.ntag.com.br/empacotamento' }}
-          CRITICO_PUT: ${{ secrets.CRITICO_PUT || '70500000' }}
-          ALERTA_PUT: ${{ secrets.ALERTA_PUT || '68500000' }}
-          ALERTA_CALL: ${{ secrets.ALERTA_CALL || '66500000' }}
-          CRITICO_CALL: ${{ secrets.CRITICO_CALL || '64000000' }}
+          CRITICO_PUT: ${{ secrets.CRITICO_PUT || '73500000' }}
+          ALERTA_PUT: ${{ secrets.ALERTA_PUT || '71500000' }}
+          ALERTA_CALL: ${{ secrets.ALERTA_CALL || '69500000' }}
+          CRITICO_CALL: ${{ secrets.CRITICO_CALL || '67000000' }}
           EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'intel@saturnotrading.com.br' }}
           EMAIL_REPLY_TO: ${{ secrets.EMAIL_REPLY_TO || 'intel@saturnotrading.com.br' }}
